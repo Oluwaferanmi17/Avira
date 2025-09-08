@@ -127,7 +127,7 @@ export default function CreateEventPage() {
                     value={draft.category}
                     onChange={(e) => setBasic({ category: e.target.value })}
                   >
-                    <option value="">Choose a category</option>
+                    <option value="">Choose a category</option>h
                     <option value="Music">Music</option>
                     <option value="Festival">Festival</option>
                     <option value="Culture">Culture</option>
