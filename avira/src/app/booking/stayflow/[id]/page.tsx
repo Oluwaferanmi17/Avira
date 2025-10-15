@@ -1,35 +1,60 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useMemo, useState } from "react";
-import NavBar from "../../components/NavBar";
-import { CalendarDays, MapPin, Users } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import NavBar from "../../../components/NavBar";
+import { MapPin, Users } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useBookingStore } from "@/Store/useBookingStore";
+import { withAuth } from "../../../components/withAuth";
+import Map from "../../../components/AviraMapCore";
+import { Calendar } from "../../../../components/ui/calendar";
+import { useSession } from "next-auth/react";
 // import GoogleMapComponent from "@/app/components/GoogleMapComponent";
 interface DateRange {
   from?: Date;
   to?: Date;
 }
-const stay = {
-  title: "Avira Demo Stay",
-  location: "Somewhere in Africa",
-  pricePerNight: 15000,
-  tags: ["Near cultural center"],
-  images: [
-    "https://pub-cdn.sider.ai/u/U0W8H749A1J/web-coder/6896f83c14f019f2a83eb929/resource/cb3ee8af-cb64-4ad1-bc1c-099af9522301.jpg",
-    "https://pub-cdn.sider.ai/u/U0W8H749A1J/web-coder/6896f83c14f019f2a83eb929/resource/432aaceb-bf1f-4ec5-b076-2b6e06e87927.jpg",
-    "https://pub-cdn.sider.ai/u/U0W8H749A1J/web-coder/6896f83c14f019f2a83eb929/resource/be00d042-d390-475f-88e8-cbdf23bca156.jpg",
-  ],
-  description:
-    "Sample listing demonstrating the Avira booking flow. Choose dates and guests to continue.",
-  amenities: ["Wi‑Fi", "Kitchen", "Air conditioning"],
-};
-export default function StayDetails() {
+interface StayType {
+  id: string;
+  title: string;
+  description: string;
+  photos: string[];
+  amenities: string[];
+  pricing?: { basePrice: number; cleaningFee: number; serviceFee: number };
+  address?: { city: string; country: string; line1: string };
+}
+import PhotoGallery from "@/app/components/PhotoGallery";
+function StayDetails() {
+  const { id } = useParams();
   const router = useRouter();
+  const [stay, setStay] = useState<StayType | null>(null);
+  const booking = useBookingStore((state) => state.booking);
   const [range, setRange] = useState<DateRange>({});
+  const [showCalendar, setShowCalendar] = useState(false);
   const [guests, setGuests] = useState<number>(2);
   const [note, setNote] = useState<string>("");
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [, setLoading] = useState(true);
+  // const [showAll, setShowAll] = useState(false);
+  const { data: session } = useSession();
+  useEffect(() => {
+    if (!id) return;
+    const fetchStay = async () => {
+      try {
+        const res = await fetch(`/api/stays/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch stay");
+        const data = await res.json();
+        setStay(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    // if (id) fetchStay();
+    fetchStay();
+  }, [id]);
   const nights = useMemo(() => {
     if (range.from && range.to) {
       return Math.max(0, differenceInCalendarDays(range.to, range.from));
@@ -37,27 +62,83 @@ export default function StayDetails() {
     return 0;
   }, [range]);
   const cost = useMemo(() => {
-    const subtotal = nights * stay.pricePerNight;
-    const cleaning = nights > 0 ? 20 : 0;
-    const service = nights > 0 ? 10 : 0;
+    if (!stay) return { subtotal: 0, cleaning: 0, service: 0, total: 0 };
+    const subtotal = nights * (stay.pricing?.basePrice || 0);
+    const cleaning = stay.pricing?.cleaningFee || 0;
+    const service = stay.pricing?.serviceFee || 0;
     const total = subtotal + cleaning + service;
     return { subtotal, cleaning, service, total };
-  }, [nights]);
-  function proceedToConfirmation() {
+  }, [nights, stay]);
+  if (!stay) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+  const proceedToConfirmation = async () => {
+    // const session = await getServerSession(authOptions);
+    if (!session) {
+      alert("You must be logged in to book");
+      return;
+    }
+    if (
+      !booking ||
+      booking.type !== "stay" ||
+      !booking.stay ||
+      !booking.dates
+    ) {
+      alert("Booking data is incomplete");
+      return;
+    }
+    try {
+      const res = await fetch("/api/bookingStay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session?.user?.id, // logged in user
+          stayId: booking.stay.id, // 👈 from store
+          checkIn: booking.dates.checkIn,
+          checkOut: booking.dates.checkOut,
+          guests: booking.guests,
+          note: booking.note,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Booking failed");
+      }
+      const newBooking = await res.json();
+      useBookingStore.getState().setBooking({
+        ...booking,
+        dbId: newBooking.id,
+      });
+      router.push(`/booking/confirm/${newBooking.id}`);
+    } catch (err: any) {
+      console.error("Error confirming booking:", err);
+      alert(err.message);
+    }
+  };
+  function handleBookNow() {
+    if (!stay) return;
     if (!range.from || !range.to || nights <= 0) return;
-    const setBooking = useBookingStore.getState().setBooking;
-    setBooking({
-      reservationId: "",
+    useBookingStore.getState().setBooking({
+      reservationId: crypto.randomUUID(),
+      type: "stay",
+      item: {
+        id: stay.id,
+        title: stay.title,
+        location: stay.address?.city,
+        pricePerNight: stay.pricing?.basePrice || 0,
+      },
       stay: {
         id: stay.id,
-        price: stay.pricePerNight,
         title: stay.title,
-        location: stay.location,
-        pricePerNight: stay.pricePerNight,
-        tags: stay.tags,
-        images: stay.images,
         description: stay.description,
+        photos: stay.photos,
         amenities: stay.amenities,
+        pricePerNight: stay.pricing?.basePrice || 0,
+        address: stay.address,
       },
       dates: {
         checkIn: range.from.toISOString(),
@@ -65,14 +146,11 @@ export default function StayDetails() {
         nights,
       },
       guests,
-      cost,
-      createdAt: new Date().toISOString(),
       note,
+      cost: cost,
+      createdAt: new Date().toISOString(),
     });
-    router.push(`/booking/confirm`);
-  }
-  function handleBookNow() {
-    if (!range.from || !range.to || nights <= 0) return;
+
     setSummaryOpen(true);
   }
   const bookDisabled = !range.from || !range.to || nights <= 0;
@@ -81,20 +159,25 @@ export default function StayDetails() {
       <NavBar />
       <main className="flex-1">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Title & Location */}
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               {stay.title}
             </h1>
             <div className="flex flex-wrap items-center gap-3 text-slate-700">
               <div className="inline-flex items-center gap-1 text-sm">
-                <MapPin className="h-4 w-4" /> {stay.location}
+                <MapPin className="h-4 w-4" />{" "}
+                {stay.address
+                  ? `${stay.address.line1}, ${stay.address.city}, ${stay.address.country}`
+                  : "No location"}
               </div>
               <div className="text-sm">•</div>
               <div className="inline-flex items-center gap-1 text-sm">
-                <Users className="h-4 w-4" /> Up to 4 guests
+                <Users className="h-4 w-4" />
+                {guests} guests
               </div>
-              {stay.tags && stay.tags.length > 0 && (
+              {/* <div className="text-sm">•</div> */}
+              {/* <div>{Users?.name}</div> */}
+              {/* {stay.tags && stay.tags.length > 0 && (
                 <>
                   <div className="text-sm">•</div>
                   <div className="flex flex-wrap gap-2">
@@ -108,63 +191,55 @@ export default function StayDetails() {
                     ))}
                   </div>
                 </>
-              )}
+              )} */}
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <section className="lg:col-span-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2 h-64 rounded-xl overflow-hidden">
-                  <img
-                    src={stay.images[0]}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <div className="grid grid-rows-2 gap-3">
-                  <div className="h-31 rounded-xl overflow-hidden">
-                    <img
-                      src={stay.images[1]}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div className="h-31 rounded-xl overflow-hidden">
-                    <img
-                      src={stay.images[2]}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                </div>
-              </div>
+              <PhotoGallery photos={stay.photos} />
               <div className="rounded-2xl border border-slate-200 p-4 bg-white">
                 <h2 className="font-semibold mb-2">About this place</h2>
                 <p className="text-slate-700">{stay.description}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 p-4 bg-white">
                 <h2 className="font-semibold mb-2">Amenities</h2>
-                <div>
-                  {stay.amenities.map((a) => (
-                    <span
-                      key={a}
-                      className="text-sm px-3 py-1 rounded-full border border-slate-200 bg-slate-50"
-                    >
-                      {a}
-                    </span>
-                  ))}
+                <div className="space-x-5">
+                  {stay.amenities?.length ? (
+                    stay.amenities.map((a) => (
+                      <span
+                        key={a}
+                        className="text-sm px-3 py-1 rounded-full border border-slate-200 bg-slate-50 
+                        text-blue-500
+                      
+                        "
+                      >
+                        {a}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-slate-500">No amenities listed.</p>
+                  )}
                 </div>
               </div>
               <div className="rounded-2xl border border-slate-200 p-4 bg-white">
                 <h2 className="font-semibold mb-2">Where you’ll be</h2>
-                <p className="mt-2">{stay.location}</p>
-                {/* <div className="flex flex-wrap gap-2">
-                  <GoogleMapComponent lat={6.5244} lng={3.3792} />{" "}
-                </div> */}
+                <p className="mt-2">
+                  {" "}
+                  {stay.address
+                    ? `${stay.address.line1}, ${stay.address.city}, ${stay.address.country}`
+                    : "No address"}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {/* <GoogleMapComponent lat={6.5244} lng={3.3792} />{" "} */}
+                  <Map />
+                </div>
               </div>
             </section>
             <aside className="lg:col-span-4">
               <div className="rounded-2xl border border-slate-200 p-4 bg-white sticky top-24 space-y-4">
                 <div>
                   <div className="text-2xl font-semibold">
-                    ₦{stay.pricePerNight}
+                    ₦{stay.pricing?.basePrice || 0}
                   </div>
                   <div className="text-sm text-slate-600">/ night</div>
                 </div>
@@ -183,15 +258,21 @@ export default function StayDetails() {
                           )}`
                         : "Add dates"
                     }
-                    onClick={() => {
-                      const start = prompt("Enter check-in date (YYYY-MM-DD)");
-                      const end = prompt("Enter check-out date (YYYY-MM-DD)");
-                      if (start && end) {
-                        setRange({ from: new Date(start), to: new Date(end) });
-                      }
-                    }}
+                    required
+                    onClick={() => setShowCalendar(!showCalendar)}
                     className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer"
                   />
+                  {showCalendar && (
+                    <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
+                      <Calendar
+                        mode="range"
+                        selected={range as any}
+                        onSelect={(v: any) => setRange(v ?? {})}
+                        numberOfMonths={2}
+                        initialFocus
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-slate-600">
@@ -234,7 +315,7 @@ export default function StayDetails() {
                 <div className="rounded-md border border-slate-200 p-3 text-sm space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-700">
-                      ₦{stay.pricePerNight} × {nights || 0} night
+                      ₦{stay.pricing?.basePrice || 0} × {nights || 0} night
                       {nights === 1 ? "" : "s"}
                     </span>
                     <span className="font-medium">₦{cost.subtotal}</span>
@@ -259,7 +340,7 @@ export default function StayDetails() {
                 <button
                   className={`w-full py-2 rounded-md text-white ${
                     bookDisabled
-                      ? "bg-slate-300 cursor-not-allowed"
+                      ? "bg-[#85ccbe] cursor-not-allowed"
                       : "bg-[#00b894] hover:bg-[#018c71]"
                   }`}
                   disabled={bookDisabled}
@@ -322,3 +403,4 @@ export default function StayDetails() {
     </div>
   );
 }
+export default withAuth(StayDetails);

@@ -8,6 +8,16 @@ export default function AnimatedSearchBar() {
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const goNext = () => setStep((prev) => prev + 1);
+  const handleSearch = async () => {
+    if (!location || !checkIn || !checkOut) return;
+    const params = new URLSearchParams({
+      location,
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+    });
+    window.location.href = `/stays?${params.toString()}`;
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto p-4 relative z-10">
       <div className="bg-white rounded-full shadow-md flex items-center px-4 py-2 gap-4 relative z-20">
@@ -61,6 +71,7 @@ export default function AnimatedSearchBar() {
         {/* Search Button */}
         {step >= 3 && (
           <button
+            onClick={handleSearch}
             className={`ml-auto bg-[#00b894] hover:bg-[#4f9688] text-white rounded-full p-3 shadow transition ${
               !location || !checkIn || !checkOut
                 ? "opacity-50 cursor-not-allowed"

@@ -3,34 +3,85 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, CalendarDays } from "lucide-react";
 import { useBookingStore } from "@/Store/useBookingStore";
+import { useSession } from "next-auth/react";
 export default function EventFlow() {
   const router = useRouter();
-  const setBooking = useBookingStore((state) => state.setBooking);
   const [date, setDate] = useState<string>("");
   const [tickets, setTickets] = useState<number>(1);
   const [note, setNote] = useState<string>("");
-  const handleProceed = () => {
-    setBooking({
-      reservationId: "",
-      type: "event",
-      item: {
-        id: "event-123", // dynamic ID placeholder
-        title: "Ojude Oba Festival",
-        location: "Ijebu-Ode, Ogun State",
-      },
-      schedule: { date },
-      tickets,
-      dates: { checkIn: "", checkOut: "", nights: 0 }, // placeholder
-      cost: {
-        subtotal: tickets * 100,
-        service: 20,
-        total: tickets * 100 + 20,
-      },
-      createdAt: new Date().toISOString(),
-      note,
-    });
-    router.push("/booking/confirm");
+  const booking = useBookingStore((state) => state.booking);
+  const setBooking = useBookingStore((state) => state.setBooking);
+  const { data: session } = useSession();
+  const handleProceed = async () => {
+    // if (!booking?.item?.id || booking.item.price === undefined) return;
+    if (!booking?.item?.id) {
+      alert("Missing event ID");
+      return;
+    }
+    if (!session?.user?.id) {
+      alert("You must be logged in to book an event");
+      router.push("/login");
+      return;
+    }
+    // const isFree = booking.item.price === 0;
+    // const subtotal = tickets * booking.item.price;
+    // const service = isFree ? 0 : Math.round(subtotal * 0.05);
+    // const total = subtotal + service;
+
+    // const updatedBooking = {
+    //   ...booking,
+    //   tickets,
+    //   note,
+    //   schedule: { date },
+    //   cost: { subtotal, service, total },
+    //   createdAt: new Date().toISOString(),
+    // };
+
+    // setBooking(updatedBooking);
+
+    try {
+      const res = await fetch("/api/bookingEvent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session.user.id, // ✅ comes from auth
+          eventId: booking.item.id, // TODO: pass actual event ID dynamically
+          tickets,
+          note,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create booking");
+      }
+      const bookingResponse = await res.json();
+      setBooking({
+        reservationId: bookingResponse.id,
+        type: "event",
+        item: {
+          id: bookingResponse.event.id,
+          title: bookingResponse.event.title,
+          location: `${bookingResponse.event.city}, ${bookingResponse.event.country}`,
+        },
+        schedule: { date },
+        tickets: bookingResponse.tickets,
+        dates: { checkIn: "", checkOut: "", nights: 0 },
+        cost: {
+          subtotal: bookingResponse.subtotal,
+          service: bookingResponse.service,
+          total: bookingResponse.total,
+        },
+        createdAt: bookingResponse.createdAt,
+        note: bookingResponse.note,
+      });
+
+      router.push(`/booking/confirm/${bookingResponse.id}`);
+    } catch (error) {
+      console.error("Error booking event:", error);
+      alert("Something went wrong while booking.");
+    }
   };
+
   return (
     <div className="container mx-auto py-10">
       <div className="bg-white border rounded-2xl shadow p-6 max-w-md mx-auto space-y-6">

@@ -12,6 +12,7 @@ export interface Pricing {
   currency: "USD" | "NGN" | "KES" | "GHS" | "ZAR";
   basePrice: number;
   cleaningFee: number;
+  serviceFee: number;
 }
 export interface Availability {
   unavailable: Date[];
@@ -66,7 +67,7 @@ function getInitialDraft(): HostDraft {
       lat: undefined,
       lng: undefined,
     },
-    pricing: { currency: "USD", basePrice: 50, cleaningFee: 0 },
+    pricing: { currency: "USD", basePrice: 50, cleaningFee: 0, serviceFee: 0 },
     availability: { unavailable: [] },
     amenities: [],
     capacity: { guests: 2, bedrooms: 1, beds: 1, baths: 1 },

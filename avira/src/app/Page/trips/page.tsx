@@ -1,318 +1,210 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
-import {
-  Calendar,
-  MapPin,
-  Clock,
-  Heart,
-  Trash2,
-  Plus,
-  Download,
-  Share2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../../../components/ui/tabs";
-import NavBar from "../../components/NavBar";
-const Trips = () => {
-  const [savedEvents] = useState([
-    {
-      id: 1,
-      type: "event",
-      name: "Ojude Oba Festival",
-      location: "Ijebu-Ode, Ogun State",
-      date: "August 15-17, 2024",
-      image: "photo-1466442929976-97f336a657be",
-      price: "Free",
-      category: "Cultural Festival",
-    },
-    {
-      id: 2,
-      type: "event",
-      name: "Calabar Carnival",
-      location: "Calabar, Cross River",
-      date: "December 1-31, 2024",
-      image: "photo-1472396961693-142e6e269027",
-      price: "Free",
-      category: "Street Carnival",
-    },
-  ]);
-  const [savedStays] = useState([
-    {
-      id: 1,
-      type: "stay",
-      name: "Luxury Apartment in Victoria Island",
-      location: "Victoria Island, Lagos",
-      checkIn: "Aug 14, 2024",
-      checkOut: "Aug 18, 2024",
-      price: "₦35,000",
-      rating: 4.8,
-      image: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      type: "stay",
-      name: "Cozy Studio near Calabar Beach",
-      location: "Calabar, Cross River",
-      checkIn: "Nov 30, 2024",
-      checkOut: "Dec 5, 2024",
-      price: "₦18,000",
-      rating: 4.6,
-      image: "/placeholder.svg",
-    },
-  ]);
-  const [savedExperiences] = useState([
-    {
-      id: 1,
-      type: "experience",
-      name: "Lagos Food & Culture Tour",
-      location: "Victoria Island, Lagos",
-      duration: "4-5 hours",
-      price: "₦8,000",
-      rating: 4.9,
-      image: "photo-1466442929976-97f336a657be",
-      category: "Food Tour",
-    },
-  ]);
-  const allSavedItems = [...savedEvents, ...savedStays, ...savedExperiences];
-  return (
-    <div className="min-h-screen bg-background">
-      <NavBar />
-      <div className="bg-gradient-to-r from-green-300 to-green-600 text-white py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-center mb-2">My Trip Plan</h1>
-          <p className="text-center text-lg opacity-90">
-            Plan your perfect Nigerian adventure
-          </p>
-        </div>
-      </div>
-      <div className="container mx-auto px-4 py-8">
-        {/* Trip Actions */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <Button className="bg-[#00b894] hover:bg-[#018c71]">
-            <Download className="w-4 h-4 mr-2" />
-            Export Itinerary
-          </Button>
-          <Button variant="outline">
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Trip
-          </Button>
-          <Button variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Custom Item
-          </Button>
-        </div>
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">
-              All Items ({allSavedItems.length})
-            </TabsTrigger>
-            <TabsTrigger value="events">
-              Events ({savedEvents.length})
-            </TabsTrigger>
-            <TabsTrigger value="stays">Stays ({savedStays.length})</TabsTrigger>
-            <TabsTrigger value="experiences">
-              Experiences ({savedExperiences.length})
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="all" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allSavedItems.map((item) => (
-                <div
-                  key={`${item.type}-${item.id}`}
-                  className="max-w-sm bg-white rounded-2xl shadow-md overflow-hidden border hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="relative h-48  overflow-hidden">
-                    <img
-                      src={
-                        item.image?.includes("photo-")
-                          ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&q=80`
-                          : item.image
-                      }
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <Badge className="bg-[#00b894] hover:bg-[#018c71] text-white backdrop-blur-sm">
-                        {item.type === "event" && "🎉 Event"}
-                        {item.type === "stay" && "🏠 Stay"}
-                        {item.type === "experience" && "🎯 Experience"}
-                      </Badge>
-                    </div>
-                    <div className="absolute top-4 right-4">
-                      <button className="rounded-full bg-white/90 hover:bg-white p-2 shadow hover:scale-105 transition-all duration-300">
-                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {item.location}
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <div className="space-y-2 mb-4">
-                      {item.type === "event" && (
-                        <div className="flex items-center text-sm">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {(item as any).date}
-                        </div>
-                      )}
-                      {item.type === "stay" && (
-                        <div className="flex items-center text-sm">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {(item as any).checkIn} - {(item as any).checkOut}
-                        </div>
-                      )}
-                      {item.type === "experience" && (
-                        <div className="flex items-center text-sm">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {(item as any).duration}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-green-600">
-                        {item.price}
-                      </span>
-                      <button className="p-2 text-red-500 hover:text-black cursor-pointer hover:bg-gray-100 transition rounded-md border">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="events" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="max-w-sm bg-white rounded-2xl shadow-md overflow-hidden border hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={`https://images.unsplash.com/${event.image}?auto=format&fit=crop&w=400&q=80`}
-                      alt={event.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge className="absolute top-4 left-4 bg-[#00b894] hover:bg-[#018c71] text-white backdrop-blur-sm">
-                      {event.category}
-                    </Badge>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                      {event.name}
-                    </h3>
-                    <p className="text-gray-500 text-sm">{event.location}</p>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{event.date}</span>
-                      <button className="p-2 text-red-500 hover:text-black cursor-pointer hover:bg-gray-100 transition rounded-md border">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="stays" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedStays.map((stay) => (
-                <div
-                  key={stay.id}
-                  className="max-w-sm bg-white rounded-2xl shadow-md overflow-hidden border hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="aspect-video bg-muted">
-                    <img
-                      src={stay.image}
-                      alt={stay.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                      {stay.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {stay.location}
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div className="space-y-2">
-                      <div className="text-sm">
-                        {stay.checkIn} - {stay.checkOut}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-green-600">
-                          {stay.price}/night
-                        </span>
-                        <button className="p-2 text-red-500 hover:text-black cursor-pointer hover:bg-gray-100 transition rounded-md border">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import NavBar from "@/app/components/NavBar";
+interface Trip {
+  id: string;
+  type: "stay" | "event" | "experience";
+  title: string;
+  location: string;
+  dateStart: string | null;
+  dateEnd: string | null;
+  price: string;
+  image: string | null;
+  createdAt: string;
+  hostId: string;
+  hostName?: string; // optional, if you want to show it later
+  hostImage?: string; // optional
+}
+import { useRouter } from "next/navigation";
+import { MessageSquare } from "lucide-react";
+import ReviewModal from "@/app/components/ReviewModal";
+export default function TripsPage() {
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchTrips = async () => {
+      try {
+        const res = await fetch("/api/trips");
+        if (!res.ok) throw new Error("Failed to load trips");
+        const data = await res.json();
+        setTrips(data);
+      } catch (error) {
+        console.error("Error fetching trips:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrips();
+  }, []);
+  const today = new Date();
+  const upcomingTrips = trips.filter(
+    (t) => t.dateStart && new Date(t.dateStart) > today
+  );
+  const currentTrips = trips.filter(
+    (t) =>
+      t.dateStart &&
+      t.dateEnd &&
+      new Date(t.dateStart) <= today &&
+      new Date(t.dateEnd) >= today
+  );
+  const pastTrips = trips.filter(
+    (t) => t.dateEnd && new Date(t.dateEnd) < today
+  );
+  const formatDate = (dateStr: string | null) =>
+    dateStr
+      ? new Date(dateStr).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "—";
 
-          <TabsContent value="experiences" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedExperiences.map((experience) => (
-                <div
-                  key={experience.id}
-                  className="max-w-sm bg-white rounded-2xl shadow-md overflow-hidden border hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={`https://images.unsplash.com/${experience.image}?auto=format&fit=crop&w=400&q=80`}
-                      alt={experience.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge className="absolute top-4 left-4 bg-[#00b894] hover:bg-[#018c71] text-white backdrop-blur-sm">
-                      {experience.category}
-                    </Badge>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                      {experience.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {experience.location}
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-green-600">
-                        {experience.price}
-                      </span>
-                      <button className="p-2 text-red-500 hover:text-black cursor-pointer hover:bg-gray-100 transition rounded-md border">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+  if (loading)
+    return (
+      <div className="text-center mt-10 text-gray-500">
+        Loading your trips...
+      </div>
+    );
+  return (
+    <div>
+      <NavBar />
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-emerald-700 mb-6">Your Trips</h1>
+        <TripSection
+          title="Upcoming Trips"
+          trips={upcomingTrips}
+          formatDate={formatDate}
+        />
+        <TripSection
+          title="Ongoing Trips"
+          trips={currentTrips}
+          formatDate={formatDate}
+        />
+        <TripSection
+          title="Past Trips"
+          trips={pastTrips}
+          formatDate={formatDate}
+        />
       </div>
     </div>
   );
-};
-export default Trips;
+}
+function TripSection({
+  title,
+  trips,
+  formatDate,
+}: {
+  title: string;
+  trips: Trip[];
+  formatDate: (date: string | null) => string;
+}) {
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const handleContactHost = async (hostId: string) => {
+    try {
+      if (!hostId) {
+        console.error("Host ID missing");
+        return;
+      }
+
+      // ✅ Create or fetch existing conversation
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiverId: hostId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Failed to start conversation:", err);
+        return;
+      }
+
+      const conversation = await res.json();
+
+      // ✅ Redirect guest to messages page
+      router.push(`/Page/messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+  if (trips.length === 0) return null;
+  return (
+    <div className="mb-10">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">{title}</h2>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {trips.map((trip) => (
+          <div
+            key={trip.id}
+            className="rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition bg-white"
+          >
+            {trip.image ? (
+              <div className="relative h-48 w-full">
+                <Image
+                  src={trip.image}
+                  alt={trip.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400">
+                No Image
+              </div>
+            )}
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs uppercase tracking-wide text-emerald-600 font-medium">
+                  {trip.type}
+                </span>
+                <span className="text-sm text-gray-500">{trip.price}</span>
+              </div>
+              <h3 className="font-semibold text-gray-800 line-clamp-1">
+                {trip.title}
+              </h3>
+              <p className="text-sm text-gray-500 line-clamp-1">
+                {trip.location}
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                {formatDate(trip.dateStart)} - {formatDate(trip.dateEnd)}
+              </p>
+              <button
+                onClick={() => handleContactHost(trip.hostId)}
+                className="flex items-center gap-2 border rounded-md px-4 py-2 text-sm hover:bg-gray-100 transition ml-45"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Contact Host
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedTrip(trip);
+                  setIsModalOpen(true);
+                }}
+                className="bg-black text-white px-4 py-2 rounded-lg"
+              >
+                Leave a Review
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {selectedTrip && (
+        <ReviewModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTrip(null);
+          }}
+          stayId={selectedTrip.type === "stay" ? selectedTrip.id : undefined}
+          eventId={selectedTrip.type === "event" ? selectedTrip.id : undefined}
+          experienceId={
+            selectedTrip.type === "experience" ? selectedTrip.id : undefined
+          }
+          onSuccess={() => console.log("Review submitted successfully")}
+        />
+      )}
+    </div>
+  );
+}

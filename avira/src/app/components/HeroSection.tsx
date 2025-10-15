@@ -3,6 +3,9 @@ import { motion } from "framer-motion";
 import Slider from "react-slick";
 import { FaSearchLocation } from "react-icons/fa";
 // import { Badge } from "lucide-react";
+import { useSession } from "next-auth/react";
+import WelcomeToast from "./WelcomeToast";
+import { useState, useEffect, useRef } from "react";
 const images = [
   "https://images.unsplash.com/photo-1694336662153-287aed24d9ef?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fG5pZ2VyaWElMjBmZXN0aXZhbHxlbnwwfHwwfHx8MA%3D%3D",
   "https://images.unsplash.com/photo-1719314313652-d9835e0c52c3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8bmlnZXJpYSUyMHRyYXZlbHxlbnwwfHwwfHx8MA%3D%3D",
@@ -10,6 +13,9 @@ const images = [
   "https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8bmlnZXJpYSUyMGxhbmRzY2FwZXxlbnwwfHwwfHx8MA%3D%3D",
 ];
 const HeroSection = () => {
+  const { data: session, status: authStatus } = useSession();
+  const [showWelcome, setShowWelcome] = useState(false);
+  const prevStatus = useRef(authStatus);
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -20,8 +26,36 @@ const HeroSection = () => {
     autoplaySpeed: 5000,
     arrows: false,
   };
+  useEffect(() => {
+    if (
+      prevStatus.current === "unauthenticated" &&
+      authStatus === "authenticated" &&
+      !sessionStorage.getItem("welcomeShown")
+    ) {
+      setShowWelcome(true);
+      sessionStorage.setItem("welcomeShown", "true");
+
+      const timer = setTimeout(() => setShowWelcome(false), 5000);
+      return () => clearTimeout(timer);
+    }
+    if (authStatus === "unauthenticated") {
+      sessionStorage.removeItem("welcomeShown");
+    }
+    prevStatus.current = authStatus;
+  }, [authStatus]);
+  // const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    if (session?.user) {
+      setShowWelcome(true);
+      const timer = setTimeout(() => setShowWelcome(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [session]);
   return (
     <section className=" bg-white py-1 px-6 md:px-12 overflow-hidden">
+      {/* {showWelcome && session?.user?.name && (
+        <WelcomeToast userName={session.user.name} />
+      )} */}
       <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-10 z-10 ">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -58,6 +92,9 @@ const HeroSection = () => {
             </div>
           </div>
         </motion.div>
+        {showWelcome && session?.user?.name && (
+          <WelcomeToast userName={session.user.name} />
+        )}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

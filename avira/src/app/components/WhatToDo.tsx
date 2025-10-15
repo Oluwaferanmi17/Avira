@@ -13,25 +13,26 @@ const WhatToDo = () => {
       title: "Find a Place to Stay",
       description: "Browse unique homes, hotels, and stays across Nigeria.",
       icon: <FaBed className="text-3xl text-[#00b894]" />,
-      href: "/stays",
+      href: "Page/stay",
     },
     {
       title: "Explore Events",
       description: "Discover festivals, concerts, and cultural activities.",
       icon: <FaCalendarAlt className="text-3xl text-[#00b894]" />,
-      href: "/events",
+      href: "Page/events",
     },
     {
       title: "Local Experiences",
       description: "Visit amusement parks, museums, and food tours.",
       icon: <FaMapMarkedAlt className="text-3xl text-[#00b894]" />,
-      href: "/experiences",
+      href: "Page/experiences",
     },
     {
-      title: "Plan Your Trip",
-      description: "Build your itinerary and save events or stays.",
+      title: "Track your journeys",
+      description:
+        "Discover your stays, events, and experiences past memories and future plans await.",
       icon: <FaPenFancy className="text-3xl text-[#00b894]" />,
-      href: "/trip",
+      href: "Page/trips",
     },
   ];
 

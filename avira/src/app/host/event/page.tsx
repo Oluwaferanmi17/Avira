@@ -4,6 +4,11 @@ import Link from "next/link";
 import { ChevronLeft, CheckCircle2 } from "lucide-react";
 import { useHostEventStore } from "@/Store/useHostEventStore";
 import PhotoStep from "@/app/components/PhotoStep";
+import { Calendar } from "@/components/ui/calendar";
+import { useRouter } from "next/navigation";
+import NavBar from "@/app/components/NavBar";
+// import { useSession } from "next-auth/react";
+type EventCategory = "Music" | "Festival" | "Culture" | "Film" | "Art";
 type StepKey = "basic" | "photos" | "location" | "schedule" | "review";
 const stepsOrder: StepKey[] = [
   "basic",
@@ -30,6 +35,8 @@ function StepHeader({ title, desc }: { title: string; desc?: string }) {
   );
 }
 export default function CreateEventPage() {
+  // const { data: session } = useSession();
+  const router = useRouter();
   const {
     draft,
     setBasic,
@@ -65,14 +72,44 @@ export default function CreateEventPage() {
     const prev = stepsOrder[idx - 1];
     if (prev) setStep(prev);
   }
-  function handlePublish() {
-    alert("Your event has been published (demo).");
-    reset();
+  async function handlePublish() {
+    try {
+      const payload = {
+        title: draft.title,
+        description: draft.description,
+        category: draft.category,
+        photos: draft.photos,
+        country: draft.location.country,
+        city: draft.location.city,
+        venue: draft.location.venue,
+        dateStart: draft.schedule.dates[0] || null, // first selected date
+        dateEnd: draft.schedule.dates[draft.schedule.dates.length - 1] || null, // last selected date
+        ticketPrice: draft.schedule.ticketPrice,
+        capacity: draft.schedule.capacity,
+      };
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Failed: ${err.error}`);
+        return;
+      }
+      const event = await res.json();
+      alert("Event published successfully!");
+      reset();
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong!");
+    }
+    router.push("/host/dashboard");
   }
   return (
     <main className="flex-1">
+      <NavBar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="/host/dashboard">
@@ -125,14 +162,17 @@ export default function CreateEventPage() {
                   <select
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
                     value={draft.category}
-                    onChange={(e) => setBasic({ category: e.target.value })}
+                    onChange={(e) =>
+                      setBasic({ category: e.target.value as EventCategory })
+                    }
                   >
-                    <option value="">Choose a category</option>h
+                    <option value="">Choose a category</option>
                     <option value="Music">Music</option>
                     <option value="Festival">Festival</option>
                     <option value="Culture">Culture</option>
                     <option value="Film">Film</option>
                     <option value="Art">Art</option>
+                    <option value="Street Carnival">Street Carnival</option>
                   </select>
                 </>
               )}
@@ -182,9 +222,12 @@ export default function CreateEventPage() {
                     title="Schedule & Tickets"
                     desc="Pick event dates, ticket price, and capacity."
                   />
-                  {/* Replace with your custom calendar later */}
                   <div className="border rounded-md p-4 text-sm text-slate-600 bg-slate-50">
-                    Calendar component placeholder
+                    <Calendar
+                      mode="multiple"
+                      selected={draft.schedule.dates}
+                      onSelect={(dates) => setSchedule({ dates: dates || [] })}
+                    />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
@@ -268,7 +311,7 @@ export default function CreateEventPage() {
                   className="px-4 py-2 rounded-md bg-[#00b894] text-white hover:bg-[#00a57e] transition"
                   onClick={handlePublish}
                 >
-                  Publish Event
+                  Host Event
                 </button>
               )}
             </div>

@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 const AuthForm = () => {
   // const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
@@ -17,6 +20,7 @@ const AuthForm = () => {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode"); // 'signin' or 'signup'
   const [isSignUp, setIsSignUp] = useState(mode !== "signin");
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   useEffect(() => {
     setIsSignUp(mode !== "signin");
   }, [mode]);
@@ -29,17 +33,48 @@ const AuthForm = () => {
       setLoading(false);
       return;
     }
-    setTimeout(() => {
-      setLoading(false);
+    try {
       if (isSignUp) {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to sign up");
+        await signIn("credentials", {
+          email,
+          password,
+          callbackUrl: "/", // redirect after login
+        });
+        // auto-login
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+          callbackUrl: "/",
+        });
+        if (result?.error) throw new Error(result.error);
         setSignUpSuccess(true);
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        //   } else {
-        //     console.log("Logged in:", { email, password });
+      } else {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+          callbackUrl: "/",
+        });
+        if (result?.error) {
+          setError("Invalid credentials");
+        } else {
+          // window.location.href = "/";
+          window.location.href = callbackUrl;
+        }
       }
-    }, 2000);
+    } catch (err: any) {
+      setError(err?.message || "Unexpected error");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <section className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -120,15 +155,32 @@ const AuthForm = () => {
           <span className="text-gray-500 text-sm">or continue with</span>
           <hr className="flex-1 border-gray-300" />
         </div>
-        <div className="flex gap-4 justify-center">
-          <button className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2">
-            <FcGoogle className="text-xl" />
-            Google
-          </button>
-          <button className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2">
-            <FaApple className="text-xl" />
-            Apple
-          </button>
+        <div className="flex flex-col gap-4 justify-center">
+          <div className="flex gap-4">
+            <button
+              className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+            >
+              <FcGoogle className="text-xl" />
+              Google
+            </button>
+            <button
+              className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2 "
+              onClick={() => signIn("apple", { callbackUrl: "/" })}
+            >
+              <FaApple className="text-xl" />
+              Apple
+            </button>
+          </div>
+          <div className="ml-24">
+            <button
+              className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2 item-"
+              onClick={() => signIn("github", { callbackUrl: "/" })}
+            >
+              <FaGithub className="text-xl" />
+              GitHub
+            </button>
+          </div>
         </div>
         <p className="text-center text-sm text-gray-600">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}

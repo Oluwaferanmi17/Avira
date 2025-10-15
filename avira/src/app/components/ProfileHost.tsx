@@ -1,21 +1,64 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { FaCamera } from "react-icons/fa";
 export default function HostProfileHeader() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [bannerPic, setBannerPic] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(false);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+        if (data.user) {
+          setProfilePic(data.user.profileImage || null);
+          setBannerPic(data.user.bannerImage || null);
+        }
+      } catch (error) {
+        console.error("Failed to load user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+  const uploadImage = async (file: File, type: "profile" | "banner") => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
 
-  const handleImageUpload = (
+    try {
+      const res = await fetch("/api/user/profile-upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      if (type === "profile") setProfilePic(data.user.profileImage);
+      else setBannerPic(data.user.bannerImage);
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading image");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    setImage: React.Dispatch<React.SetStateAction<string | null>>
+    setImage: React.Dispatch<React.SetStateAction<string | null>>,
+    type: "profile" | "banner"
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Local preview
       const imageUrl = URL.createObjectURL(file);
       setImage(imageUrl);
+
+      // Upload to Cloudinary via API
+      await uploadImage(file, type);
     }
   };
 
@@ -32,7 +75,8 @@ export default function HostProfileHeader() {
         )}
         <button
           onClick={() => bannerInputRef.current?.click()}
-          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          disabled={loading}
+          className="absolute top-2 right-2 bg-white p-2 rounded-full shadow hover:bg-gray-100 disabled:opacity-50"
         >
           <FaCamera />
         </button>
@@ -41,7 +85,7 @@ export default function HostProfileHeader() {
           accept="image/*"
           className="hidden"
           ref={bannerInputRef}
-          onChange={(e) => handleImageUpload(e, setBannerPic)}
+          onChange={(e) => handleImageUpload(e, setBannerPic, "banner")}
         />
       </div>
 
@@ -55,7 +99,8 @@ export default function HostProfileHeader() {
           />
           <button
             onClick={() => profileInputRef.current?.click()}
-            className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow hover:bg-gray-100"
+            disabled={loading}
+            className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow hover:bg-gray-100 disabled:opacity-50"
           >
             <FaCamera className="w-4 h-4" />
           </button>
@@ -64,13 +109,9 @@ export default function HostProfileHeader() {
             accept="image/*"
             className="hidden"
             ref={profileInputRef}
-            onChange={(e) => handleImageUpload(e, setProfilePic)}
+            onChange={(e) => handleImageUpload(e, setProfilePic, "profile")}
           />
         </div>
-        {/* <h2 className="text-lg font-semibold mt-2">Hello, Host 👋</h2>
-        <p className="text-sm text-gray-500">
-          Edit your profile & manage listings
-        </p> */}
       </div>
     </div>
   );

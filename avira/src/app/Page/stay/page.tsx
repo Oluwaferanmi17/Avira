@@ -3,63 +3,23 @@ import { MapPin } from "lucide-react";
 import AnimatedSearchBar from "../../components/AnimatedSearchBar";
 import Link from "next/link";
 import NavBar from "../../components/NavBar";
-const Stay = () => {
-  const stays = [
-    {
-      id: 1,
-      name: "Luxury Apartment in Victoria Island",
-      location: "Victoria Island, Lagos",
-      price: "₦35,000",
-      rating: 4.8,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "Pool", "Gym", "Parking"],
-    },
-    {
-      id: 2,
-      name: "Cozy Studio near Calabar Beach",
-      location: "Calabar, Cross River",
-      price: "₦18,000",
-      rating: 4.6,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "Beach Access", "Kitchen"],
-    },
-    {
-      id: 3,
-      name: "Modern Loft in GRA",
-      location: "GRA, Port Harcourt",
-      price: "₦28,000",
-      rating: 4.7,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "Balcony", "Kitchen", "Parking"],
-    },
-    {
-      id: 4,
-      name: "Traditional House in Ancient City",
-      location: "Kano, Kano State",
-      price: "₦22,000",
-      rating: 4.5,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "Garden", "Cultural Tours"],
-    },
-    {
-      id: 5,
-      name: "Riverside Cottage",
-      location: "Lokoja, Kogi State",
-      price: "₦15,000",
-      rating: 4.4,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "River View", "Fishing"],
-    },
-    {
-      id: 6,
-      name: "City Center Apartment",
-      location: "Wuse II, Abuja",
-      price: "₦40,000",
-      rating: 4.9,
-      image: "/placeholder.svg",
-      amenities: ["WiFi", "City View", "Gym", "24/7 Security"],
-    },
-  ];
+import getStay from "../../actions/getStays";
+interface Stay {
+  id: string;
+  title: string;
+  photos: string[];
+  amenities: string[];
+  address?: {
+    city: string;
+    country: string;
+  };
+  pricing?: {
+    basePrice: number;
+  };
+}
+import HeartButton from "../../components/Heart";
+const Stay = async () => {
+  const stays = await getStay();
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <NavBar />
@@ -79,33 +39,42 @@ const Stay = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold">Available Stays</h2>
-          <p className="text-muted-foreground">Properties Found</p>
+          <p className="text-muted-foreground">
+            {stays.length} Properties Found
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {stays.map((stay) => (
-            <Link key={stay.id} href={`/booking/stayflow`}>
-              <div className="bg-white hover:shadow-lg transition-shadow duration-300 rounded-lg shadow-md p-4 cursor-pointer">
-                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
+            <Link key={stay.id} href={`/booking/stayflow/${stay.id}`}>
+              <div className="relative bg-white hover:shadow-lg transition-shadow duration-300 rounded-lg shadow-md p-4 cursor-pointer">
+                <HeartButton
+                  itemId={stay.id}
+                  type="stay"
+                  className="absolute top-3 right-3 z-20"
+                />
+                <div className="aspect-video bg-muted rounded-t-lg overflow-hidden relative z-10">
                   <img
-                    src={stay.image}
-                    alt={stay.name}
-                    className="w-full h-40 object-cover rounded-md mb-4"
+                    src={stay.photos?.[0] || "/placeholder.svg"}
+                    alt={stay.title}
+                    className="w-full h-40 object-cover rounded-md mb-4 hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <div className="pb-2">
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-semibold line-clamp-1">
-                      {stay.name}
+                      {stay.title}
                     </h3>
                     <div className="flex items-center gap-1 text-sm">
                       <span>⭐</span>
-                      <span>{stay.rating}</span>
+                      {/* <span>{stay.rating}</span> */}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 mt-2">
                     <MapPin className="h-3 w-3 text-gray-500" />
-                    <p className="text-gray-600 text-sm">{stay.location}</p>
+                    <p className="text-gray-600 text-sm">
+                      {stay.address?.city}, {stay.address?.country}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1 mb-3">

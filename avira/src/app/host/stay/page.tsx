@@ -13,6 +13,7 @@ import { useHostCreateStore } from "@/Store/useHostCreateStore";
 import PhotoStep from "../../components/PhotoStep";
 import PhotoGrid from "../../components/PhotoGrid";
 import { Calendar } from "../../../components/ui/calendar";
+import { toast } from "react-hot-toast";
 type StepKey =
   | "basic"
   | "photos"
@@ -65,7 +66,7 @@ const DEFAULT_RULES = [
 ];
 export default function CreateStayPage() {
   const {
-    draft,
+    // draft,
     setBasic,
     addPhoto,
     removePhoto,
@@ -78,12 +79,13 @@ export default function CreateStayPage() {
     toggleRule,
     setAdditionalRules,
   } = useHostCreateStore();
-
-  const [step, setStep] = useState<StepKey>("basic");
-
-  const [unavailable, setUnavailable] = useState<Date[]>(
-    draft.availability.unavailable
+  const draft = useHostCreateStore((s) => s.draft);
+  const setPricing = useHostCreateStore((s) => s.setPricing);
+  const unavailable = useHostCreateStore(
+    (s) => s.draft.availability.unavailable
   );
+  const setAvailability = useHostCreateStore((s) => s.setAvailability);
+  const [step, setStep] = useState<StepKey>("basic");
   function goNext() {
     const idx = stepsOrder.indexOf(step);
     const next = stepsOrder[idx + 1];
@@ -118,14 +120,25 @@ export default function CreateStayPage() {
     goNext();
   }
   const router = useRouter();
-  function handlePublish() {
-    alert("Your stay has been published (demo).");
-    reset();
-    router.push("/host/dashboard");
+  async function handlePublish() {
+    try {
+      const res = await fetch("/api/stays", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to publish stay");
+      }
+      toast.success("Listing Created 🎉");
+      reset();
+      router.push("/host/dashboard");
+    } catch (error: any) {
+      console.error("Publish error:", error);
+      toast.error(error.message || "Something went wrong");
+    }
   }
-  const [price, setPrice] = useState(15000); // base nightly price
-  const [cleaningFee, setCleaningFee] = useState(5000);
-  const [serviceFee, setServiceFee] = useState(1000);
   const stepIndex = stepsOrder.indexOf(step);
   return (
     <main className="flex-1">
@@ -469,8 +482,12 @@ export default function CreateStayPage() {
                         </label>
                         <input
                           type="number"
-                          value={price}
-                          onChange={(e) => setPrice(Number(e.target.value))}
+                          value={draft.pricing.basePrice ?? ""}
+                          onChange={(e) =>
+                            setPricing({
+                              basePrice: Number(e.target.value),
+                            })
+                          }
                           className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00b894]"
                         />
                       </div>
@@ -480,9 +497,11 @@ export default function CreateStayPage() {
                         </label>
                         <input
                           type="number"
-                          value={cleaningFee}
+                          value={draft.pricing.cleaningFee ?? ""}
                           onChange={(e) =>
-                            setCleaningFee(Number(e.target.value))
+                            setPricing({
+                              cleaningFee: Number(e.target.value),
+                            })
                           }
                           className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00b894]"
                         />
@@ -493,9 +512,11 @@ export default function CreateStayPage() {
                         </label>
                         <input
                           type="number"
-                          value={serviceFee}
+                          value={draft.pricing.serviceFee ?? ""}
                           onChange={(e) =>
-                            setServiceFee(Number(e.target.value))
+                            setPricing({
+                              serviceFee: Number(e.target.value),
+                            })
                           }
                           className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00b894]"
                         />
@@ -515,7 +536,9 @@ export default function CreateStayPage() {
                         <Calendar
                           mode="multiple"
                           selected={unavailable}
-                          onSelect={(dates: any) => setUnavailable(dates || [])}
+                          onSelect={(dates: any) =>
+                            setAvailability(dates || [])
+                          }
                           initialFocus
                         />
                         <div className="flex-1">
@@ -526,7 +549,7 @@ export default function CreateStayPage() {
                           <div className="mt-3 flex items-center gap-2">
                             <button
                               className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition text-sm"
-                              onClick={() => setUnavailable([])}
+                              onClick={() => setAvailability([])}
                             >
                               Clear dates
                             </button>
@@ -666,11 +689,11 @@ export default function CreateStayPage() {
                       <div className="text-sm text-slate-700 space-y-2">
                         <div className="inline-flex items-center gap-2">
                           <span className="h-4 w-4">₦</span>
-                          {price} {draft.pricing.basePrice} / night
+                          {draft.pricing.basePrice ?? ""}
+                          {draft.pricing.basePrice} / night
                         </div>
                         <div className="text-xs text-slate-600 mt-1">
-                          Cleaning fee: {cleaningFee}{" "}
-                          {draft.pricing.cleaningFee}
+                          Cleaning fee: {draft.pricing.cleaningFee ?? ""}
                         </div>
                       </div>
                     </div>

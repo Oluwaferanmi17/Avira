@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { FaTrash } from "react-icons/fa";
 import StepHeader from "../components/StepHeader";
-
 export default function PhotoStep({
   draft,
   addPhoto,
@@ -11,35 +11,49 @@ export default function PhotoStep({
   photosValid,
 }: any) {
   const [files, setFiles] = useState<File[]>([]);
-
+  const [uploading, setUploading] = useState(false);
   const onDrop = (acceptedFiles: File[]) => {
     setFiles((prev) => [...prev, ...acceptedFiles]);
-
-    // Convert dropped files to object URLs for preview in draft
-    acceptedFiles.forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      addPhoto(previewUrl);
-    });
   };
-
-  const handleRemove = (fileName: string, previewUrl: string) => {
+  const handleRemove = (fileName: string, url: string) => {
     setFiles((prev) => prev.filter((file) => file.name !== fileName));
-    removePhoto(previewUrl);
+    removePhoto(url);
   };
+  const handleUpload = async () => {
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) throw new Error("Upload failed");
 
+        const data = await res.json();
+        if (data.secure_url) {
+          addPhoto(data.secure_url); // ✅ Cloudinary URL saved to Zustand
+        }
+      }
+      // setFiles([]); // clear after upload
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "image/*": [] },
     onDrop,
     multiple: true,
   });
-
   return (
     <>
       <StepHeader
         title="Photos"
         desc="Upload high-quality images by dragging and dropping or clicking below."
       />
-
       {/* Drag & Drop area */}
       <div
         {...getRootProps()}
@@ -51,7 +65,6 @@ export default function PhotoStep({
           <span className="text-[#00b894] font-medium">click to select</span>
         </p>
       </div>
-
       {/* Preview thumbnails */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         {files.map((file) => {
@@ -77,21 +90,20 @@ export default function PhotoStep({
           );
         })}
       </div>
-
       {/* Validation message */}
       {!photosValid && (
         <p className="text-xs text-rose-600 mt-3">
           Please add at least 3 photos.
         </p>
       )}
-
       {/* Upload button */}
       {files.length > 0 && (
         <button
-          onClick={() => alert("Upload to backend API next!")}
+          onClick={handleUpload}
+          disabled={uploading}
           className="mt-6 bg-[#00b894] text-white px-6 py-2 rounded-lg shadow hover:bg-[#019a7a] transition"
         >
-          Upload Photos
+          {uploading ? "Uploading..." : "Upload your image"}
         </button>
       )}
     </>

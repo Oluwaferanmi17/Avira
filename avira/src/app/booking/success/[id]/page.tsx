@@ -6,7 +6,9 @@ import { CalendarDays, CheckCircle2, MapPin, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useBookingStore } from "@/Store/useBookingStore";
 import Link from "next/link";
-export default function BookingSuccess() {
+import { useRouter } from "next/navigation";
+import { MessageSquare } from "lucide-react";
+export default function BookingSuccess({ hostId }: { hostId: string }) {
   const params = useParams();
   const booking = useBookingStore((state) => state.booking);
   const reservationId = booking?.reservationId || params.id || "AVR-UNKNOWN";
@@ -16,6 +18,36 @@ export default function BookingSuccess() {
   const to = booking?.dates?.checkOut
     ? parseISO(booking.dates.checkOut)
     : undefined;
+  const router = useRouter();
+  const handleContactHost = async () => {
+    try {
+      if (!hostId) {
+        console.error("Host ID missing");
+        return;
+      }
+
+      // ✅ Create or fetch existing conversation
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiverId: hostId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Failed to start conversation:", err);
+        return;
+      }
+
+      const conversation = await res.json();
+
+      // ✅ Redirect guest to messages page
+      router.push(`/Page/messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
       <NavBar />
@@ -43,11 +75,12 @@ export default function BookingSuccess() {
               </div>
               <div>
                 <div className="text-slate-900 font-medium">
-                  {booking?.item?.title || "Your stay"}
+                  {booking?.stay?.title || "Your stay"}
                 </div>
-                {booking?.item?.location ? (
+                {booking?.stay?.address ? (
                   <div className="text-sm text-slate-600 inline-flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-4 w-4" /> {booking.item.location}
+                    <MapPin className="h-4 w-4" />
+                    {`${booking.stay.address.line1}, ${booking.stay.address.city}, ${booking.stay.address.country}`}
                   </div>
                 ) : null}
               </div>
@@ -105,6 +138,13 @@ export default function BookingSuccess() {
                 Back to Home
               </button>
             </Link>
+            <button
+              onClick={handleContactHost}
+              className="flex items-center gap-2 border rounded-md px-4 py-2 text-sm hover:bg-gray-100 transition"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Contact Host
+            </button>
           </div>
           <div className="mt-4 text-xs text-slate-500">
             A confirmation email with your reservation details has been sent

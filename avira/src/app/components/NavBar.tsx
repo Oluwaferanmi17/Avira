@@ -1,14 +1,60 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { HiMenu, HiX } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import { User } from "lucide-react";
-import { FaBell } from "react-icons/fa";
+import { Bus, MessageSquare } from "lucide-react";
+import { FaBell, FaHeart, FaUserCircle } from "react-icons/fa";
+import { useSession, signOut } from "next-auth/react";
+import { pusherClient } from "@/lib/pusher";
+import AviraLogo from "./AviraLogo";
+// import { icon } from "leaflet";
+// import WelcomeToast from "./WelcomeToast";
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { data: session } = useSession();
+  // const [showWelcome, setShowWelcome] = useState(false);
+  // useEffect(() => {
+  //   if (session?.user) {
+  //     setShowWelcome(true);
+  //     const timer = setTimeout(() => setShowWelcome(false), 5000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [session]);
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        if (!res.ok) throw new Error("Failed to fetch notifications");
+        const data = await res.json();
+
+        const unread = data.filter((n: any) => !n.read).length;
+        setUnreadCount(unread);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    };
+
+    fetchUnread();
+  }, []);
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = pusherClient.subscribe(`user-${session.user.id}`);
+
+    channel.bind("new-notification", (notification: any) => {
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => {
+      pusherClient.unsubscribe(`user-${session.user.id}`);
+    };
+  }, [session?.user?.id]);
+
+  const isLoggedIn = !!session;
   const navLinks = [
     { label: "Homes", href: "/Page/stay" },
     { label: "Events", href: "/Page/events" },
@@ -16,21 +62,30 @@ const NavBar = () => {
     { label: "Become a Host", href: "/host" },
   ];
   const navExtras = [
-    { label: "Wishlist", href: "/Page/wishlist" },
     {
-      icon: <User className="inline mr-2" />,
+      icon: <FaHeart className="inline mr-2" />,
+      label: "Wishlist",
+      href: "/Page/wishlist",
+    },
+    {
+      icon: <FaUserCircle className="inline mr-2" />,
       label: "Profile",
       href: "/Page/profile",
     },
-    { label: "Trip", href: "/Page/trips" },
-    // { label: "Notification", href: "/Page/notification" },
-    { label: "Help Center", href: "/help" },
-    { label: "Refer a Host", href: "/refer" },
+    {
+      // icon: <AviraLogo className="inline w-20 h-20" />,
+      icon: <Bus className="inline" />,
+      label: "Trip",
+      href: "/Page/trips",
+    },
+    {
+      icon: <MessageSquare className="inline mr-2" />,
+      label: "Messages",
+      href: "/Page/messages",
+    },
   ];
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -60,11 +115,11 @@ const NavBar = () => {
           animate={{ scale: isScrolled ? 0.9 : 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Link href="/" className=" text-xl font-bold text-[#00b894]">
+          <Link href="/" className="text-xl font-bold text-[#00b894]">
             Avira
           </Link>
         </motion.div>
-        <ul className="hidden md:flex gap-6 text-gray-800 font-medium">
+        <ul className="hidden md:flex gap-6 text-gray-800 font-medium items-center">
           {navLinks.map((nav) => (
             <li key={nav.label}>
               <Link href={nav.href} className="hover:text-[#00b894] transition">
@@ -72,14 +127,37 @@ const NavBar = () => {
               </Link>
             </li>
           ))}
-          <li>
-            <Link
-              href="/auth?mode=signin"
-              className="ml-4 bg-[#00b894] text-white px-4 py-2 rounded-xl hover:bg-[#019a7a] transition"
-            >
-              Login
-            </Link>
-          </li>
+          {!isLoggedIn && (
+            <li>
+              <Link
+                href="/auth?mode=signin"
+                className="ml-4 bg-[#00b894] text-white px-4 py-2 rounded-xl hover:bg-[#019a7a] transition"
+              >
+                Login
+              </Link>
+            </li>
+          )}
+          {isLoggedIn && (
+            <>
+              {/* {showWelcome && session?.user?.name && (
+                <WelcomeToast userName={session.user.name} />
+              )} */}
+              <li>
+                <div className="relative group">
+                  <img
+                    src={session.user?.image || "/default-avatar.png"}
+                    alt="profile"
+                    className="w-10 h-10 rounded-full cursor-pointer"
+                  />
+                </div>
+              </li>
+              <li>
+                <div>
+                  <Link href="/host/dashboard">Switch To Hosting</Link>
+                </div>
+              </li>
+            </>
+          )}
         </ul>
         <button
           className="text-2xl text-gray-800 md:block"
@@ -98,52 +176,67 @@ const NavBar = () => {
             className="fixed md:absolute md:top-full md:right-6 md:w-64 inset-0 md:inset-auto bg-white/90 backdrop-blur-md z-40 px-6 py-6 shadow-xl rounded-lg md:rounded-xl"
           >
             <ul className="flex flex-col gap-4 text-gray-800 font-medium">
-              {navLinks.map((nav) => (
+              {/* {navLinks.map((nav) => (
                 <li key={nav.label}>
                   <Link
                     href={nav.href}
                     onClick={() => setIsOpen(false)}
                     className="block hover:text-[#00b894]"
                   >
-                    {nav.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link
-                  href="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className="block bg-[#00b894] text-white text-center px-4 py-2 rounded-xl"
-                >
-                  Login/SignUp
-                </Link>
-              </li>
-              <hr className="my-2 border-gray-300" />
-              {navExtras.map((nav) => (
-                <li key={nav.label}>
+                    {/* {nav.label} */}
+              {/* </Link> */}
+              {/* </li> */}
+              {/* // ))} */}
+              {!isLoggedIn && (
+                <li>
                   <Link
-                    href={nav.href}
+                    href="/auth"
                     onClick={() => setIsOpen(false)}
-                    className="block hover:text-[#00b894]"
+                    className="block bg-[#00b894] text-white text-center px-4 py-2 rounded-xl"
                   >
-                    {nav.icon}
-                    {nav.label}
+                    Login/SignUp
                   </Link>
                 </li>
-              ))}
-              <li className="relative">
-                <Link
-                  href="/Page/notification"
-                  className="hover:text-[#00b894] flex justify center gap-2"
-                >
-                  <FaBell className="text-xl" /> Notifications
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-0 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                      {unreadCount}
-                    </span>
-                  )}
-                </Link>
-              </li>
+              )}
+              {isLoggedIn && (
+                <>
+                  {navExtras.map((nav) => (
+                    <li key={nav.label}>
+                      <Link
+                        href={nav.href}
+                        onClick={() => setIsOpen(false)}
+                        className="block hover:text-[#00b894]"
+                      >
+                        {nav.icon} {nav.label}
+                      </Link>
+                    </li>
+                  ))}
+                  <li className="relative">
+                    <Link
+                      href="/Page/notification"
+                      className="hover:text-[#00b894] flex items-center gap-2"
+                    >
+                      <FaBell /> Notifications
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-0 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => {
+                        signOut({ callbackUrl: "/" });
+                        setIsOpen(false);
+                      }}
+                      className="block w-full bg-[#00b894] text-white text-center px-4 py-2 rounded-xl hover:bg-[#00a383] transition"
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </>
+              )}
             </ul>
           </motion.div>
         )}

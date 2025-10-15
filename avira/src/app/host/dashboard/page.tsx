@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import {
   FaHome,
@@ -9,6 +10,7 @@ import {
   FaEnvelope,
   FaChartBar,
   FaMoneyBillWave,
+  FaMapMarkerAlt,
   // FaEdit,
   // FaTrash,
 } from "react-icons/fa";
@@ -18,11 +20,13 @@ import {
   // Calendar,
   CalendarDays,
   Edit,
-  Eye,
+  // Eye,
   MessageSquare,
   // Settings,
   Star,
   LayoutDashboard,
+  X,
+  Trash,
 } from "lucide-react";
 import {
   LineChart,
@@ -38,7 +42,35 @@ import {
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import NavBar from "@/app/components/NavBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+// import Dashboard from "@/app/components/Dashboard";
+// import Dashboard from "../../components/dashboard";
+interface Review {
+  id: string;
+  comment: string;
+  rating: number;
+  createdAt: string;
+  user?: {
+    name?: string;
+    image?: string;
+  };
+  stay?: {
+    title?: string;
+  };
+  event?: {
+    title?: string;
+  };
+  experience?: {
+    title?: string;
+  };
+  reply?: {
+    message: string;
+  };
+}
+
+// import Image from "next/image";
+// import getUsersStays from "@/app/actions/getUsersStays";S
 const navItems = [
   { name: "Dashboard", icon: <LayoutDashboard /> },
   { name: "My Listings", icon: <FaHome /> },
@@ -50,25 +82,25 @@ const navItems = [
   { name: "Analytics", icon: <FaChartBar /> },
   { name: "Payouts", icon: <FaMoneyBillWave /> },
 ];
-const mockReviews = [
-  {
-    id: 1,
-    guest: "John Doe",
-    stay: "Cozy Apartment in Lagos",
-    rating: 5,
-    comment:
-      "Amazing stay! The host was super friendly and the apartment was spotless.",
-    date: "Aug 12, 2025",
-  },
-  {
-    id: 2,
-    guest: "Sarah Smith",
-    stay: "Beach House in Calabar",
-    rating: 4,
-    comment: "Great location, loved the view. Only wish the Wi-Fi was faster.",
-    date: "Jul 28, 2025",
-  },
-];
+// const mockReviews = [
+//   {
+//     id: 1,
+//     guest: "John Doe",
+//     stay: "Cozy Apartment in Lagos",
+//     rating: 5,
+//     comment:
+//       "Amazing stay! The host was super friendly and the apartment was spotless.",
+//     date: "Aug 12, 2025",
+//   },
+//   {
+//     id: 2,
+//     guest: "Sarah Smith",
+//     stay: "Beach House in Calabar",
+//     rating: 4,
+//     comment: "Great location, loved the view. Only wish the Wi-Fi was faster.",
+//     date: "Jul 28, 2025",
+//   },
+// ];
 const earningsData = [
   { month: "Jan", earnings: 120000 },
   { month: "Feb", earnings: 95000 },
@@ -77,50 +109,104 @@ const earningsData = [
   { month: "May", earnings: 130000 },
   { month: "Jun", earnings: 200000 },
 ];
-
-const bookingsData = [
-  { name: "Stays", count: 28 },
-  { name: "Events", count: 12 },
-  { name: "Experiences", count: 18 },
-];
+interface Stay {
+  id: string;
+  title: string;
+  description?: string;
+  photos?: string[];
+  isPublished: boolean;
+  address?: {
+    city?: string;
+    country?: string;
+  };
+  pricing?: {
+    basePrice?: number;
+  };
+  bookings?: { id: string }[];
+}
 
 export default function HostDashboard() {
   const [isOpen, setIsOpen] = useState(false);
-  const [properties] = useState([
-    {
-      id: 1,
-      name: "Luxury Apartment in Victoria Island",
-      location: "Victoria Island, Lagos",
-      price: "₦35,000/night",
-      rating: 4.8,
-      reviews: 24,
-      bookings: 18,
-      status: "Active",
-      image: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      name: "Cozy Studio in Lekki",
-      location: "Lekki, Lagos",
-      price: "₦22,000/night",
-      rating: 4.6,
-      reviews: 16,
-      bookings: 12,
-      status: "Active",
-      image: "/placeholder.svg",
-    },
-    {
-      id: 3,
-      name: "Modern Loft in GRA",
-      location: "GRA, Port Harcourt",
-      price: "₦28,000/night",
-      rating: 4.7,
-      reviews: 19,
-      bookings: 8,
-      status: "Pending",
-      image: "/placeholder.svg",
-    },
-  ]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stays, setStays] = useState<Stay[]>([]);
+  const [detailsModal, setDetailsModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookingsData, setBookingsData] = useState([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [replies, setReplies] = useState<{ [key: string]: string }>({});
+  const [overview, setOverview] = useState<any>({});
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStay, setSelectedStay] = useState<Stay | null>(null);
+  const [forms, setForms] = useState({
+    title: "",
+    description: "",
+    price: "",
+  });
+  const handleEdit = async () => {
+    try {
+      if (!selectedStay?.id) return alert("No stay selected");
+
+      const res = await fetch(`/api/stays/${selectedStay.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(forms),
+      });
+
+      if (!res.ok) throw new Error("Failed to update stay");
+
+      toast.success("Stay updated successfully!", { id: "update-stay" });
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error updating stay", { id: "update-stay" });
+    }
+  };
+  const openEditModal = (stay: Stay) => {
+    setSelectedStay(stay);
+    setForms({
+      title: stay.title || "",
+      description: stay.description || "",
+      price: stay.pricing?.basePrice?.toString() || "",
+    });
+    setShowModal(true);
+  };
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/analytics");
+        const data = await res.json();
+        setBookingsData(data);
+        // const res = await fetch("/api/analytics/overview");
+        // const overview = await res.json();
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/analytics/overview");
+        const overview = await res.json();
+        setOverview(overview);
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+  const handleClick = () => {
+    // navigate to a dynamic route
+    router.push("/host/stay");
+  };
   const mockPayouts = [
     {
       id: 1,
@@ -141,35 +227,6 @@ export default function HostDashboard() {
       status: "Paid",
     },
   ];
-  const [bookings] = useState([
-    {
-      id: 1,
-      guest: "John Adebayo",
-      property: "Luxury Apartment in Victoria Island",
-      checkIn: "Jan 15, 2025",
-      checkOut: "Jan 18, 2025",
-      amount: "₦105,000",
-      status: "Confirmed",
-    },
-    {
-      id: 2,
-      guest: "Sarah Johnson",
-      property: "Cozy Studio in Lekki",
-      checkIn: "Jan 20, 2025",
-      checkOut: "Jan 25, 2025",
-      amount: "₦110,000",
-      status: "Pending",
-    },
-    {
-      id: 3,
-      guest: "David Okafor",
-      property: "Modern Loft in GRA",
-      checkIn: "Jan 22, 2025",
-      checkOut: "Jan 24, 2025",
-      amount: "₦56,000",
-      status: "Confirmed",
-    },
-  ]);
   const [form, setForm] = useState({
     name: "Jane Doe",
     email: "jane@example.com",
@@ -182,19 +239,143 @@ export default function HostDashboard() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeTab = searchParams.get("tab") || "Dashboard";
+
   const handleTabClick = (tabName: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabName);
     router.push(`/host/dashboard?${params.toString()}`);
   };
-  const [replies, setReplies] = useState<{ [key: number]: string }>({});
-  const handleReply = (id: number, text: string) => {
-    setReplies((prev) => ({ ...prev, [id]: text }));
+  // const [replies, setReplies] = useState<{ [key: number]: string }>({});
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch("/api/host/reviews");
+        const data = await res.json();
+        console.log("Fetched reviews:", data);
+        console.log(reviews);
+        console.log("STAYS:", stays);
+        console.log("EVENTS:", events);
+        // console.log("EXPERIENCES:", experiences);
+
+        setReviews(
+          data.map((r: any) => ({
+            id: r.id,
+            user: {
+              name: r.user?.name || "Anonymous Guest",
+              image: r.user?.image || "/default-avatar.png",
+            },
+            comment: r.comment,
+            rating: r.rating,
+            createdAt: r.createdAt,
+            stay: r.stay,
+            event: r.event,
+            experience: r.experience,
+            reply: r.reply,
+          }))
+        );
+      } catch {
+        toast.error("Failed to load reviews");
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  const handleReply = async (reviewId: string, message: string) => {
+    try {
+      const res = await fetch("/api/host/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewId, message }),
+      });
+
+      if (res.ok) {
+        toast.success("Reply sent!");
+        setReplies((prev) => ({ ...prev, [reviewId]: message }));
+      } else {
+        toast.error("Failed to send reply");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+  };
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("/api/my-events", {
+          method: "GET",
+          credentials: "include", // ✅ send session cookies
+        });
+        if (!res.ok) throw new Error("Failed to fetch events");
+        const data = await res.json();
+        setEvents(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    // if (loading) return <p>Loading...</p>;
+    fetchEvents();
+  }, []);
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch("/api/my-stays");
+      const data = await res.json();
+      setStays(data);
+    }
+    fetchData();
+  }, []);
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await fetch("/api/booking");
+        if (!res.ok) throw new Error("Failed to fetch bookings");
+        const data = await res.json();
+        setBookings(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+  const handleContactGuest = async (receiverId: string) => {
+    try {
+      if (!bookings || bookings.length === 0) {
+        console.error("No bookings available");
+        return;
+      }
+
+      // ✅ Create or fetch existing conversation
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiverId }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to start conversation");
+        const err = await res.json();
+        console.log("Error details:", err);
+        return;
+      }
+
+      const conversation = await res.json();
+
+      // ✅ Redirect to messages page with the conversation ID
+      router.push(`/host/messages?conversationId=${conversation.id}`);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
   };
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked =
+      type === "checkbox" && "checked" in e.target
+        ? e.target.checked
+        : undefined;
     setForm({
       ...form,
       [name]: type === "checkbox" ? checked : value,
@@ -203,11 +384,29 @@ export default function HostDashboard() {
   const handleSave = () => {
     alert("✅ Settings saved (mock)!");
   };
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm("Are you sure you want to delete this stay?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`/api/stays/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Failed to delete stay");
+        return;
+      }
+      toast.success("Stay deleted successfully!");
+      router.refresh(); // reload stays
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+    }
+  };
   return (
     <div>
       <NavBar />
       <div className="min-h-screen flex bg-white">
-        <aside className="w-64 bg-white shadow-md px-4 py-6">
+        <aside className="w-64 bg-white shadow-md px-4 py-6 ">
           <h2 className="text-2xl font-bold mb-8 text-[#00b894]">Avira Host</h2>
           <nav className="space-y-4">
             {navItems.map((item) => (
@@ -234,7 +433,9 @@ export default function HostDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                 <div className="bg-white p-6 rounded-xl shadow">
                   <h3 className="text-sm text-gray-500">Total Bookings</h3>
-                  <p className="text-2xl font-bold mt-2">28</p>
+                  <p className="text-2xl font-bold mt-2">
+                    {overview.totalBookings}
+                  </p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow">
                   <h3 className="text-sm text-gray-500">Earnings</h3>
@@ -247,37 +448,41 @@ export default function HostDashboard() {
                   <p className="text-2xl font-bold mt-2">3,450</p>
                 </div>
               </div>
+              {/* <Dashboard /> */}
             </>
           )}
           {activeTab === "My Listings" && (
             <div className="mt-4">
-              <button className="mb-4 bg-[#00b894] text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <button
+                className="mb-4 bg-[#00b894] text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                onClick={handleClick}
+              >
                 <FaPlus /> Add New Stay
               </button>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((property) => (
+                {stays.map((stay) => (
                   <div
-                    key={property.id}
+                    key={stay.id}
                     className="bg-white rounded-xl border shadow-md overflow-hidden max-w-sm"
                   >
                     <div className="aspect-video bg-muted">
                       <img
-                        src={property.image}
-                        alt={property.name}
+                        src={stay.photos?.[0]}
+                        alt={stay.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="p-3 space-y-3">
                       <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                          {property.name}
+                          {stay.title}
                         </h2>
                         <span className="text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-full">
-                          {property.status}
+                          {stay.isPublished ? "Published" : "Draft"}
                         </span>
                       </div>
                       <div className="text-gray-500 text-sm">
-                        {property.location}
+                        {stay.address?.city}, {stay.address?.country}
                       </div>
                     </div>
                     <div className="text-sm space-y-1 p-4">
@@ -287,7 +492,7 @@ export default function HostDashboard() {
                             Price:
                           </span>
                           <span className="font-semibold text-green-600">
-                            {property.price}
+                            ₦{stay.pricing?.basePrice || 0}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -295,25 +500,94 @@ export default function HostDashboard() {
                           <div className="flex items-center">
                             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
                             <span>
-                              {property.rating} ({property.reviews} reviews)
+                              {/* {stay.rating} ({stay.reviews} reviews) */}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span>Bookings:</span>
-                          <span>{property.bookings} total</span>
+                          <span>{stay.bookings?.length ?? 0} total</span>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
-                        </button>
-                        <button className="flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <button
+                          className="flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          onClick={() => openEditModal(stay)}
+                        >
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </button>
+                        <button
+                          className="flex-1 flex items-center justify-center gap-2 border rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-red-500"
+                          // onClick={() => handleDelete(property.id)}
+                          onClick={() => handleDelete(stay.id)}
+                        >
+                          <Trash className="w-3 h-3 mr-1" />
+                          Delete
+                        </button>
                       </div>
+                      {showModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-semibold mb-4">
+                              Edit Stay
+                            </h2>
+
+                            <label className="block text-sm font-medium mb-1">
+                              Title
+                            </label>
+                            <input
+                              type="text"
+                              value={forms.title}
+                              onChange={(e) =>
+                                setForms({ ...forms, title: e.target.value })
+                              }
+                              className="w-full border rounded-lg px-3 py-2 mb-3"
+                            />
+
+                            <label className="block text-sm font-medium mb-1">
+                              Description
+                            </label>
+                            <textarea
+                              value={forms.description}
+                              onChange={(e) =>
+                                setForms({
+                                  ...forms,
+                                  description: e.target.value,
+                                })
+                              }
+                              className="w-full border rounded-lg px-3 py-2 mb-3"
+                            />
+
+                            <label className="block text-sm font-medium mb-1">
+                              Price
+                            </label>
+                            <input
+                              type="number"
+                              value={forms.price}
+                              onChange={(e) =>
+                                setForms({ ...forms, price: e.target.value })
+                              }
+                              className="w-full border rounded-lg px-3 py-2 mb-3"
+                            />
+
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => setShowModal(false)}
+                                className="px-4 py-2 rounded-lg border text-gray-700"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={handleEdit}
+                                className="px-4 py-2 rounded-lg bg-[#00b894] text-white hover:bg-[#026c57]"
+                              >
+                                Save Changes
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -325,13 +599,65 @@ export default function HostDashboard() {
           )}
           {activeTab === "My Events" && (
             <div className="mt-4">
-              <button className="mb-4 bg-[#00b894] text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <button
+                className="mb-4 bg-[#00b894] text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                onClick={() => router.push(`/host/event`)}
+              >
                 <FaPlus /> Host an Event
               </button>
               {/* Map over events */}
-              <div className="bg-white p-6 rounded-xl shadow">
-                <p>No events yet. Add your first one!</p>
-              </div>
+              {events.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="bg-white rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition"
+                    >
+                      {event.photos?.length > 0 && (
+                        <img
+                          src={event.photos[0]}
+                          alt={event.title}
+                          // width={300}
+                          // height={200}
+                          className="w-full h-40 object-cover rounded-lg"
+                        />
+                      )}
+                      <h3 className="text-lg font-bold text-[#00b894]">
+                        {event.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm">
+                        {event.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <FaCalendarAlt />{" "}
+                        {new Date(event.dateStart).toLocaleDateString()} →{" "}
+                        {new Date(event.dateEnd).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <FaMapMarkerAlt /> {event.venue}, {event.city},{" "}
+                        {event.country}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {event._count?.bookings || 0} tickets booked
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3 pt-3">
+                        <button className="px-3 py-1 text-sm rounded-lg bg-gray-100 hover:bg-gray-200">
+                          Edit
+                        </button>
+                        <button className="px-3 py-1 text-sm rounded-lg bg-red-100 text-red-600 hover:bg-red-200">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white p-6 rounded-xl shadow">
+                  <p>No events yet. Add your first one!</p>
+                </div>
+              )}
             </div>
           )}
           {activeTab === "Bookings" && (
@@ -365,24 +691,49 @@ export default function HostDashboard() {
                     className="flex items-center justify-between border rounded-lg p-4 shadow-sm hover:shadow-md transition"
                   >
                     <div>
-                      <h2 className="font-semibold text-lg">{booking.guest}</h2>
-                      <p className="text-gray-500">{booking.property}</p>
+                      <h2 className="font-semibold text-lg">
+                        {" "}
+                        {booking.user?.name || "Guest"}
+                      </h2>
+                      <p className="text-gray-500">{booking.stay?.title}</p>
                       <p className="text-sm text-gray-600">
-                        {booking.checkIn} - {booking.checkOut}
+                        {new Date(booking.checkIn).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}{" "}
+                        -{" "}
+                        {new Date(booking.checkOut).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}
                       </p>
                       <div className="flex gap-2 mt-3">
-                        <button className="flex items-center gap-1 border rounded-md px-3 py-1 text-sm hover:bg-gray-100 transition">
+                        <button
+                          className="flex items-center gap-1 border rounded-md px-3 py-1 text-sm hover:bg-gray-100 transition"
+                          onClick={() => handleContactGuest(booking.user?.id)}
+                        >
                           <MessageSquare className="w-4 h-4" />
                           Contact Guest
                         </button>
-                        <button className="border rounded-md px-3 py-1 text-sm hover:bg-gray-100 transition">
+                        <button
+                          className="border rounded-md px-3 py-1 text-sm hover:bg-gray-100 transition"
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setDetailsModal(true);
+                          }}
+                        >
                           View Details
                         </button>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-green-600 font-semibold">
-                        {booking.amount}
+                        ₦{booking.total?.toLocaleString()}
                       </p>
                       <span
                         className={`inline-block mt-1 px-3 py-1 text-sm rounded-full font-medium ${
@@ -396,6 +747,84 @@ export default function HostDashboard() {
                     </div>
                   </div>
                 ))}
+                {bookings.length === 0 && (
+                  <div className="text-center text-gray-500 py-10">
+                    <p>No bookings yet.</p>
+                  </div>
+                )}
+                {detailsModal && selectedBooking && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                      <button
+                        onClick={() => setDetailsModal(false)}
+                        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+
+                      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                        Booking Details
+                      </h2>
+
+                      <div className="space-y-3">
+                        <p>
+                          <span className="font-medium">Guest:</span>{" "}
+                          {selectedBooking.user?.name}
+                        </p>
+                        <p>
+                          <span className="font-medium">Property:</span>{" "}
+                          {selectedBooking.stay?.title}
+                        </p>
+                        <p>
+                          <span className="font-medium">Check-In:</span>{" "}
+                          {new Date(selectedBooking.checkIn).toDateString()}
+                        </p>
+                        <p>
+                          <span className="font-medium">Check-Out:</span>{" "}
+                          {new Date(selectedBooking.checkOut).toDateString()}
+                        </p>
+                        <p>
+                          <span className="font-medium">Amount:</span> ₦
+                          {selectedBooking.total?.toLocaleString()}
+                        </p>
+                        <p>
+                          <span className="font-medium">Status:</span>{" "}
+                          <span
+                            className={`${
+                              selectedBooking.status === "Confirmed"
+                                ? "text-green-600"
+                                : "text-yellow-600"
+                            } font-semibold`}
+                          >
+                            {selectedBooking.status}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="font-medium">Payment:</span>{" "}
+                          <span className="text-gray-600 italic">
+                            Pending (not paid yet)
+                          </span>
+                        </p>
+                        <p>
+                          <span className="font-medium">Email:</span>{" "}
+                          {form.email}
+                        </p>
+                        <p>
+                          <span className="font-medium">Phone:</span>{" "}
+                          {form.phone}
+                        </p>
+                      </div>
+                      <div className="mt-6 flex justify-end">
+                        <button
+                          onClick={() => setDetailsModal(false)}
+                          className="px-4 py-2 bg-[#00b894] text-white rounded-lg hover:bg-[#009f7a] transition"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -417,33 +846,54 @@ export default function HostDashboard() {
           )}
           {activeTab === "Reviews" && (
             <div className="space-y-6">
-              {mockReviews.map((review) => (
+              {reviews.map((review) => (
                 <div key={review.id} className="bg-white shadow rounded-xl p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold">{review.guest}</h3>
-                      <p className="text-sm text-gray-500">{review.stay}</p>
+                      <img
+                        src={review.user?.image || "/default-avatar.png"}
+                        alt={review.user?.name || "Guest"}
+                        className="w-10 h-10 rounded-full"
+                      />
+
+                      <h3 className="font-semibold">
+                        {review.user?.name || "Anonymous Guest"}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {review.stay?.title ||
+                          review.event?.title ||
+                          review.experience?.title ||
+                          "Untitled"}
+                      </p>
                     </div>
-                    <span className="text-xs text-gray-500">{review.date}</span>
+                    <span className="text-xs text-gray-500">
+                      {" "}
+                      {new Date(review.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 mt-2">
-                    {Array.from({ length: review.rating }).map((_, i) => (
-                      <FaStar key={i} className="text-yellow-400" />
-                    ))}
-                    {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                      <FaStar key={i} className="text-gray-300" />
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={
+                          i < review.rating
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }
+                      />
                     ))}
                   </div>
                   <p className="mt-3 text-gray-700">{review.comment}</p>
                   <div className="mt-4">
-                    {replies[review.id] ? (
+                    {review.reply || replies[review.id] ? (
                       <div className="bg-green-50 text-green-800 p-3 rounded-lg text-sm">
                         <span className="font-semibold">Your Reply:</span>{" "}
-                        {replies[review.id]}
+                        {review.reply?.message || replies[review.id]}
                       </div>
                     ) : (
                       <div className="flex gap-2">
                         <input
+                          id={`reply-${review.id}`}
                           type="text"
                           placeholder="Write a reply..."
                           className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none"
