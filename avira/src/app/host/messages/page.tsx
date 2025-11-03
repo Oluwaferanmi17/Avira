@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FaPaperPlane, FaUserCircle } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 import { pusherClient } from "@/lib/pusher";
 import { useSession } from "next-auth/react";
 export default function Messaging({

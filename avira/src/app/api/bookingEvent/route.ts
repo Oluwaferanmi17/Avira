@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
     const subtotal = event.ticketPrice * tickets;
-    const service = 20; // flat fee, or % if you prefer
+    const service = 20;
     const total = subtotal + service;
     const booking = await prisma.eventBooking.create({
       data: {

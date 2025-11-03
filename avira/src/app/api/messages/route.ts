@@ -69,7 +69,6 @@ export async function POST(req: Request) {
   }
 }
 
-// 💬 Get all messages for a specific conversation
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);

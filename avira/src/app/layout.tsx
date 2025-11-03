@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Avira",
+  title: "Avira - African Cultural Travel Hub",
   description: "Avira your Go To Travel App",
 };
 

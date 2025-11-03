@@ -52,7 +52,7 @@ const HeroSection = () => {
     }
   }, [session]);
   return (
-    <section className=" bg-white py-1 px-6 md:px-12 overflow-hidden">
+    <section className="bg-gradient-to-br from-green-50 via-white to-orange-50 py-1 px-6 md:px-12 overflow-hidden">
       {/* {showWelcome && session?.user?.name && (
         <WelcomeToast userName={session.user.name} />
       )} */}

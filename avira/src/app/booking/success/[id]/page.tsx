@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
-import NavBar from "../../../components/NavBar";
-import Footer from "../../../components/Footer";
+import NavBar from "../../../components/Home/NavBar";
+import Footer from "../../../components/Home/Footer";
 import { CalendarDays, CheckCircle2, MapPin, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useBookingStore } from "@/Store/useBookingStore";

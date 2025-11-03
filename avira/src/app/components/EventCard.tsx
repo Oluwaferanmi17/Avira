@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import Image from "next/image";
 import { FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";

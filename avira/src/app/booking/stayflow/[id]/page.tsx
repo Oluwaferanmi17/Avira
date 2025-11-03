@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useMemo, useState, useEffect } from "react";
-import NavBar from "../../../components/NavBar";
+import NavBar from "../../../components/Home/NavBar";
 import { MapPin, Users } from "lucide-react";
 import { differenceInCalendarDays, format } from "date-fns";
 import { useRouter, useParams } from "next/navigation";

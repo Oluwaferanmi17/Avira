@@ -11,8 +11,8 @@ import {
   Ticket,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import NavBar from "@/app/components/NavBar";
-import Footer from "@/app/components/Footer";
+import NavBar from "@/app/components/Home/NavBar";
+import Footer from "@/app/components/Home/Footer";
 import { useState } from "react";
 export default function BookingConfirm() {
   const router = useRouter();

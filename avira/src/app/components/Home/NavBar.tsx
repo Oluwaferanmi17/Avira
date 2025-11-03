@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { HiMenu, HiX } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bus, MessageSquare } from "lucide-react";
+import { Bus, Crown, MessageSquare, Settings, Sparkles } from "lucide-react";
 import { FaBell, FaHeart, FaUserCircle } from "react-icons/fa";
 import { useSession, signOut } from "next-auth/react";
-import { pusherClient } from "@/lib/pusher";
-import AviraLogo from "./AviraLogo";
+// import { pusherClient } from "@/lib/pusher";
+// import AviraLogo from "./AviraLogo";
 // import { icon } from "leaflet";
 // import WelcomeToast from "./WelcomeToast";
 const NavBar = () => {
@@ -24,39 +24,39 @@ const NavBar = () => {
   //     return () => clearTimeout(timer);
   //   }
   // }, [session]);
-  useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const res = await fetch("/api/notifications");
-        if (!res.ok) throw new Error("Failed to fetch notifications");
-        const data = await res.json();
+  // useEffect(() => {
+  //   const fetchUnread = async () => {
+  //     try {
+  //       const res = await fetch("/api/notifications");
+  //       if (!res.ok) throw new Error("Failed to fetch notifications");
+  //       const data = await res.json();
 
-        const unread = data.filter((n: any) => !n.read).length;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-      }
-    };
+  //       const unread = data.filter((n: any) => !n.read).length;
+  //       setUnreadCount(unread);
+  //     } catch (err) {
+  //       console.error("Error fetching notifications:", err);
+  //     }
+  //   };
 
-    fetchUnread();
-  }, []);
-  useEffect(() => {
-    if (!session?.user?.id) return;
+  //   fetchUnread();
+  // }, []);
+  // useEffect(() => {
+  //   if (!session?.user?.id) return;
 
-    const channel = pusherClient.subscribe(`user-${session.user.id}`);
+  //   const channel = pusherClient.subscribe(`user-${session.user.id}`);
 
-    channel.bind("new-notification", (notification: any) => {
-      setUnreadCount((prev) => prev + 1);
-    });
+  //   channel.bind("new-notification", (notification: any) => {
+  //     setUnreadCount((prev) => prev + 1);
+  //   });
 
-    return () => {
-      pusherClient.unsubscribe(`user-${session.user.id}`);
-    };
-  }, [session?.user?.id]);
+  //   return () => {
+  //     pusherClient.unsubscribe(`user-${session.user.id}`);
+  //   };
+  // }, [session?.user?.id]);
 
   const isLoggedIn = !!session;
   const navLinks = [
-    { label: "Homes", href: "/Page/stay" },
+    { label: "Stays", href: "/Page/stay" },
     { label: "Events", href: "/Page/events" },
     { label: "Experiences", href: "/Page/experiences" },
     { label: "Become a Host", href: "/host" },
@@ -82,6 +82,21 @@ const NavBar = () => {
       icon: <MessageSquare className="inline mr-2" />,
       label: "Messages",
       href: "/Page/messages",
+    },
+    {
+      icon: <Crown className="inline mr-2" />,
+      label: "Host Dashboard",
+      href: "/host/dashboard",
+    },
+    {
+      icon: <Sparkles className="inline mr-2" />,
+      label: "AI Trip Planner",
+      href: "/Page/AI-TripCuriator",
+    },
+    {
+      icon: <Settings className="inline mr-2" />,
+      label: "Settings",
+      href: "/Page/Settings",
     },
   ];
   useEffect(() => {
@@ -116,6 +131,7 @@ const NavBar = () => {
           transition={{ duration: 0.3 }}
         >
           <Link href="/" className="text-xl font-bold text-[#00b894]">
+            {/* <AviraLogo /> */}
             Avira
           </Link>
         </motion.div>
@@ -151,11 +167,11 @@ const NavBar = () => {
                   />
                 </div>
               </li>
-              <li>
+              {/* <li>
                 <div>
                   <Link href="/host/dashboard">Switch To Hosting</Link>
                 </div>
-              </li>
+              </li> */}
             </>
           )}
         </ul>

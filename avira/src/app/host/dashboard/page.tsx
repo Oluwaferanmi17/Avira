@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import {
@@ -15,7 +16,7 @@ import {
   // FaTrash,
 } from "react-icons/fa";
 import ProfileHost from "../../components/ProfileHost";
-import BookingCalendar from "../../components/BookingCalendar";
+// import BookingCalendar from "../../components/BookingCalendar";S
 import {
   // Calendar,
   CalendarDays,
@@ -41,9 +42,12 @@ import {
 } from "recharts";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+// import Loader from "@/app/components/Loader";
 // import Dashboard from "@/app/components/Dashboard";
 // import Dashboard from "../../components/dashboard";
 interface Review {
@@ -133,6 +137,8 @@ export default function HostDashboard() {
   const [detailsModal, setDetailsModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
   const [bookingsData, setBookingsData] = useState([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [replies, setReplies] = useState<{ [key: string]: string }>({});
@@ -312,9 +318,9 @@ export default function HostDashboard() {
         console.error(err);
       }
     };
-    // if (loading) return <p>Loading...</p>;
     fetchEvents();
   }, []);
+
   useEffect(() => {
     async function fetchData() {
       const res = await fetch("/api/my-stays");
@@ -339,6 +345,20 @@ export default function HostDashboard() {
 
     fetchBookings();
   }, []);
+  useEffect(() => {
+    if (selectedDate) {
+      const filtered = bookings.filter((b) => {
+        const checkIn = new Date(b.checkIn);
+        const checkOut = new Date(b.checkOut);
+        // ✅ Check if selectedDate is within booking range
+        return selectedDate >= checkIn && selectedDate <= checkOut;
+      });
+      setFilteredBookings(filtered);
+    } else {
+      setFilteredBookings([]);
+    }
+  }, [selectedDate, bookings]);
+
   const handleContactGuest = async (receiverId: string) => {
     try {
       if (!bookings || bookings.length === 0) {
@@ -402,6 +422,8 @@ export default function HostDashboard() {
       console.error(error);
     }
   };
+  // if (loading) return <Loader />;
+
   return (
     <div>
       <NavBar />
@@ -672,7 +694,49 @@ export default function HostDashboard() {
               {isOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                   <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-                    <BookingCalendar />
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm text-slate-600">
+                          Select a date to view bookings.
+                        </div>
+                        <div className="mt-3 rounded-md border border-slate-200 p-3 text-sm">
+                          {selectedDate ? (
+                            filteredBookings.length > 0 ? (
+                              <div>
+                                <div className="font-medium">
+                                  {format(selectedDate, "EEEE, MMM d, yyyy")}
+                                </div>
+                                <ul className="list-disc list-inside mt-2 space-y-1">
+                                  {filteredBookings.map((b) => (
+                                    <li key={b.id}>
+                                      <span className="font-semibold">
+                                        {b.stay?.title}
+                                      </span>{" "}
+                                      — {b.user?.name || "Guest"} ({b.guests}{" "}
+                                      guest
+                                      {b.guests > 1 ? "s" : ""}) —{" "}
+                                      <span className="text-green-600">
+                                        {b.status}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : (
+                              <div>No bookings on this date.</div>
+                            )
+                          ) : (
+                            <div>No date selected.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     <div className="mt-6 flex justify-end">
                       <button
                         onClick={() => setIsOpen(false)}

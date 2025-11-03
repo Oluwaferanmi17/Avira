@@ -1,10 +1,11 @@
-import HeroSection from "./components/HeroSection";
-import PopularDestinations from "./components/PopularDestinations";
-import WhatToDo from "./components/WhatToDo";
-import Events from "./components/Events";
-import Experiences from "./components/Experiences";
-import Footer from "./components/Footer";
-import NavBar from "./components/NavBar";
+import HeroSection from "./components/Home/HeroSection";
+import PopularDestinations from "./components/Home/PopularDestinations";
+import WhatToDo from "./components/Home/WhatToDo";
+import Events from "./components/Home/Events";
+import Experiences from "./components/Home/Experiences";
+import Footer from "./components/Home/Footer";
+import NavBar from "./components/Home/NavBar";
+import BecomeAHost from "./components/Home/BecomeAHost";
 const page = () => {
   return (
     <>
@@ -14,6 +15,7 @@ const page = () => {
       <PopularDestinations />
       <Events />
       <Experiences />
+      <BecomeAHost />
       <Footer />
     </>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { MapPin, Calendar, Heart, Users } from "lucide-react";
 // import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import NavBar from "../../components/NavBar";
+import NavBar from "../../components/Home/NavBar";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/Store/useBookingStore";
 import { getEvents } from "@/app/actions/getEvent";
@@ -61,11 +61,11 @@ const Events = () => {
     router.push(`/booking/eventflow/${event.id}`);
   };
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50">
       <NavBar />
-      <div className="bg-gradient-to-r from-green-300 to-green-600 text-white py-16">
+      <div className="bg-gradient-to-br from-green-500 via-white to-orange-500 text-[#00b894] py-16">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-center mb-2">
+          <h1 className="text-4xl text-[#00b894] font-bold text-center mb-2">
             Upcoming Cultural Events
           </h1>
           <p className="text-center text-lg opacity-90 max-w-2xl mx-auto">

@@ -22,12 +22,12 @@ export async function GET() {
     const bookings = await prisma.stayBooking.findMany({
       where: {
         stay: {
-          hostId: host.id, // ✅ Correct field
+          hostId: host.id,
         },
       },
       include: {
-        stay: true, // show stay details
-        user: true, // show guest info
+        stay: true,
+        user: true,
       },
     });
 

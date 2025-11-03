@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { FaHome } from "react-icons/fa";
-import NavBar from "../components/NavBar";
+import NavBar from "../components/Home/NavBar";
 const BecomeAHost = () => {
   return (
     <div className=" mx-auto">

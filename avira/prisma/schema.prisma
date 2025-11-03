@@ -38,6 +38,20 @@ model User {
   trips                    Trip[]                    @relation("UserTrips")
   bannerImage              String?
   profileImage             String?
+  HostProfile  HostProfile[]
+}
+model HostProfile {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+
+  nin                String?  @unique
+  ninVerified        Boolean  @default(false)
+  verificationStatus String   @default("pending") // pending | verified | rejected
+  verificationDate   DateTime?
+  businessName       String?
+  businessDocument   String?
+  createdAt          DateTime @default(now())
 }
 
 model Account {
@@ -338,15 +352,20 @@ model Favourite {
 
 model Trip {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String?
   startDate   DateTime?
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  userId String @db.ObjectId
-  user   User   @relation("UserTrips", fields: [userId], references: [id], onDelete: Cascade)
+ destination  String?
+  duration     Int?
+  budget       Int?
+  interests   String[]
+  description String?
+  vibe         String?
+  itinerary    Json?
+  // createdAt    DateTime @default(now())
+  userId String? @db.ObjectId
+  user   User?   @relation("UserTrips", fields: [userId], references: [id], onDelete: Cascade)
 
   items TripItem[]
 }

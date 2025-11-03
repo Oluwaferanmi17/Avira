@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 interface Trip {
   id: string;
   type: "stay" | "event" | "experience";

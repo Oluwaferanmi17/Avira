@@ -3,133 +3,142 @@
 "use client";
 import { Clock } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import NavBar from "../../components/NavBar";
+import { useEffect, useState } from "react";
+import NavBar from "../../components/Home/NavBar";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/Store/useBookingStore";
+import { getExperience } from "@/app/actions/getExperience";
 const Experience = () => {
-  const experiences = [
-    {
-      id: 1,
-      title: "National Museum Lagos",
-      location: "Lagos Island, Lagos",
-      image: "photo-1493962853295-0fd70327578a",
-      category: "Museum",
-      description:
-        "Explore Nigeria's rich cultural heritage and ancient artifacts spanning centuries of history",
-      price: "₦2,500",
-      duration: "2-3 hours",
-      rating: 4.8,
-      reviews: 324,
-      highlights: [
-        "Ancient Benin Bronzes",
-        "Nok Terracotta",
-        "Traditional Artifacts",
-      ],
-    },
-    {
-      id: 2,
-      title: "Wonderland Amusement Park",
-      location: "Abuja",
-      image: "photo-1472396961693-142e6e269027",
-      category: "Amusement Park",
-      description:
-        "Family-friendly rides and entertainment for all ages in Nigeria's capital city",
-      price: "₦5,000",
-      duration: "Full day",
-      rating: 4.6,
-      reviews: 189,
-      highlights: ["Roller Coaster", "Water Rides", "Kids Zone"],
-    },
-    {
-      id: 3,
-      title: "Lagos Food & Culture Tour",
-      location: "Victoria Island, Lagos",
-      image: "photo-1466442929976-97f336a657be",
-      category: "Food Tour",
-      description:
-        "Taste authentic Nigerian cuisine and local delicacies while learning about Lagos culture",
-      price: "₦8,000",
-      duration: "4-5 hours",
-      rating: 4.9,
-      reviews: 256,
-      highlights: ["Street Food", "Local Markets", "Traditional Cooking"],
-    },
-    {
-      id: 4,
-      title: "Kano Ancient City Walk",
-      location: "Old City, Kano",
-      image: "photo-1466721591366-2d5fba72006d",
-      category: "Cultural Walk",
-      description:
-        "Discover centuries-old architecture and traditional crafts in historic Kano",
-      price: "₦3,500",
-      duration: "3-4 hours",
-      rating: 4.7,
-      reviews: 142,
-      highlights: [
-        "Ancient City Walls",
-        "Traditional Dyeing Pits",
-        "Kurmi Market",
-      ],
-    },
-    {
-      id: 5,
-      title: "Obudu Mountain Resort",
-      location: "Cross River State",
-      image: "photo-1500673922987-e212871fec22",
-      category: "Mountain Resort",
-      description:
-        "Cable car rides and stunning mountain views at Nigeria's premier mountain resort",
-      price: "₦12,000",
-      duration: "Full day",
-      rating: 4.8,
-      reviews: 298,
-      highlights: ["Cable Car", "Mountain Views", "Cool Climate"],
-    },
-    {
-      id: 6,
-      title: "Yankari Game Reserve Safari",
-      location: "Bauchi State",
-      image: "photo-1469041797191-50ace28483c3",
-      category: "Wildlife Safari",
-      description:
-        "Wildlife viewing and natural hot springs in Nigeria's most popular game reserve",
-      price: "₦15,000",
-      duration: "2 days",
-      rating: 4.5,
-      reviews: 167,
-      highlights: ["Wildlife Viewing", "Hot Springs", "Game Drives"],
-    },
-    {
-      id: 7,
-      title: "Olumo Rock Climbing",
-      location: "Abeokuta, Ogun State",
-      image: "photo-1605810230434-7631ac76ec81",
-      category: "Adventure",
-      description:
-        "Historic rock formation with panoramic views and cultural significance",
-      price: "₦4,000",
-      duration: "2-3 hours",
-      rating: 4.6,
-      reviews: 203,
-      highlights: ["Rock Climbing", "City Views", "Historical Sites"],
-    },
-    {
-      id: 8,
-      title: "Nike Art Gallery Tour",
-      location: "Lekki, Lagos",
-      image: "photo-1465146344425-f00d5f5c8f07",
-      category: "Art Gallery",
-      description:
-        "Largest art gallery in West Africa showcasing contemporary African art",
-      price: "₦3,000",
-      duration: "1-2 hours",
-      rating: 4.7,
-      reviews: 156,
-      highlights: ["Contemporary Art", "Traditional Crafts", "Art Workshops"],
-    },
-  ];
+  const [experiences, setExperience] = useState<any[]>([]);
+  useEffect(() => {
+    async function fetchExperience() {
+      const data = await getExperience();
+      setExperience(data);
+    }
+    fetchExperience();
+  }, []);
+  // const experiences = [
+  //   {
+  //     id: 1,
+  //     title: "National Museum Lagos",
+  //     location: "Lagos Island, Lagos",
+  //     image: "photo-1493962853295-0fd70327578a",
+  //     category: "Museum",
+  //     description:
+  //       "Explore Nigeria's rich cultural heritage and ancient artifacts spanning centuries of history",
+  //     price: "₦2,500",
+  //     duration: "2-3 hours",
+  //     rating: 4.8,
+  //     reviews: 324,
+  //     highlights: [
+  //       "Ancient Benin Bronzes",
+  //       "Nok Terracotta",
+  //       "Traditional Artifacts",
+  //     ],
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Wonderland Amusement Park",
+  //     location: "Abuja",
+  //     image: "photo-1472396961693-142e6e269027",
+  //     category: "Amusement Park",
+  //     description:
+  //       "Family-friendly rides and entertainment for all ages in Nigeria's capital city",
+  //     price: "₦5,000",
+  //     duration: "Full day",
+  //     rating: 4.6,
+  //     reviews: 189,
+  //     highlights: ["Roller Coaster", "Water Rides", "Kids Zone"],
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Lagos Food & Culture Tour",
+  //     location: "Victoria Island, Lagos",
+  //     image: "photo-1466442929976-97f336a657be",
+  //     category: "Food Tour",
+  //     description:
+  //       "Taste authentic Nigerian cuisine and local delicacies while learning about Lagos culture",
+  //     price: "₦8,000",
+  //     duration: "4-5 hours",
+  //     rating: 4.9,
+  //     reviews: 256,
+  //     highlights: ["Street Food", "Local Markets", "Traditional Cooking"],
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Kano Ancient City Walk",
+  //     location: "Old City, Kano",
+  //     image: "photo-1466721591366-2d5fba72006d",
+  //     category: "Cultural Walk",
+  //     description:
+  //       "Discover centuries-old architecture and traditional crafts in historic Kano",
+  //     price: "₦3,500",
+  //     duration: "3-4 hours",
+  //     rating: 4.7,
+  //     reviews: 142,
+  //     highlights: [
+  //       "Ancient City Walls",
+  //       "Traditional Dyeing Pits",
+  //       "Kurmi Market",
+  //     ],
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Obudu Mountain Resort",
+  //     location: "Cross River State",
+  //     image: "photo-1500673922987-e212871fec22",
+  //     category: "Mountain Resort",
+  //     description:
+  //       "Cable car rides and stunning mountain views at Nigeria's premier mountain resort",
+  //     price: "₦12,000",
+  //     duration: "Full day",
+  //     rating: 4.8,
+  //     reviews: 298,
+  //     highlights: ["Cable Car", "Mountain Views", "Cool Climate"],
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Yankari Game Reserve Safari",
+  //     location: "Bauchi State",
+  //     image: "photo-1469041797191-50ace28483c3",
+  //     category: "Wildlife Safari",
+  //     description:
+  //       "Wildlife viewing and natural hot springs in Nigeria's most popular game reserve",
+  //     price: "₦15,000",
+  //     duration: "2 days",
+  //     rating: 4.5,
+  //     reviews: 167,
+  //     highlights: ["Wildlife Viewing", "Hot Springs", "Game Drives"],
+  //   },
+  //   {
+  //     id: 7,
+  //     title: "Olumo Rock Climbing",
+  //     location: "Abeokuta, Ogun State",
+  //     image: "photo-1605810230434-7631ac76ec81",
+  //     category: "Adventure",
+  //     description:
+  //       "Historic rock formation with panoramic views and cultural significance",
+  //     price: "₦4,000",
+  //     duration: "2-3 hours",
+  //     rating: 4.6,
+  //     reviews: 203,
+  //     highlights: ["Rock Climbing", "City Views", "Historical Sites"],
+  //   },
+  //   {
+  //     id: 8,
+  //     title: "Nike Art Gallery Tour",
+  //     location: "Lekki, Lagos",
+  //     image: "photo-1465146344425-f00d5f5c8f07",
+  //     category: "Art Gallery",
+  //     description:
+  //       "Largest art gallery in West Africa showcasing contemporary African art",
+  //     price: "₦3,000",
+  //     duration: "1-2 hours",
+  //     rating: 4.7,
+  //     reviews: 156,
+  //     highlights: ["Contemporary Art", "Traditional Crafts", "Art Workshops"],
+  //   },
+  // ];
   const [search, setSearch] = useState("");
   const router = useRouter();
   const setBooking = useBookingStore((state) => state.setBooking);
@@ -159,9 +168,9 @@ const Experience = () => {
     router.push("/booking/experienceflow");
   };
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50">
       <NavBar />
-      <div className="bg-gradient-to-r from-green-300 to-green-600 text-white py-16">
+      <div className="bg-gradient-to-br from-green-500 via-white to-orange-500 text-[#00b894] py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-2">
             Local Experiences

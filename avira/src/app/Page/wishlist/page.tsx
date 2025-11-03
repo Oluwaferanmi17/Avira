@@ -1,6 +1,6 @@
 "use client";
 
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 import { useEffect, useState } from "react";
 
 interface Stay {

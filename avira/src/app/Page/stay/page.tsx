@@ -2,7 +2,7 @@
 import { MapPin } from "lucide-react";
 import AnimatedSearchBar from "../../components/AnimatedSearchBar";
 import Link from "next/link";
-import NavBar from "../../components/NavBar";
+import NavBar from "../../components/Home/NavBar";
 import getStay from "../../actions/getStays";
 interface Stay {
   id: string;
@@ -18,12 +18,13 @@ interface Stay {
   };
 }
 import HeartButton from "../../components/Heart";
+// import RetreatCard from "@/app/components/Card";
 const Stay = async () => {
   const stays = await getStay();
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50">
       <NavBar />
-      <div className="bg-[#e8efec] text-white py-16">
+      <div className="bg-gradient-to-br from-green-50 via-white to-orange-50 text-white py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-2 text-[#00b894]">
             Find Your Perfect Stay
@@ -52,6 +53,15 @@ const Stay = async () => {
                   type="stay"
                   className="absolute top-3 right-3 z-20"
                 />
+                {/* <RetreatCard
+                  imageUrl={stay.photos?.[0] || "/placeholder.svg"}
+                  title={stay.title}
+                  location={stay.address?.city || ""}
+                  price={`$${stay.pricing?.basePrice || 0}`}
+                  // rating={stay.rating || 0}
+                  description={stay.description || ""}
+                  amenities={stay.amenities}
+                /> */}
                 <div className="aspect-video bg-muted rounded-t-lg overflow-hidden relative z-10">
                   <img
                     src={stay.photos?.[0] || "/placeholder.svg"}
@@ -66,7 +76,7 @@ const Stay = async () => {
                     </h3>
                     <div className="flex items-center gap-1 text-sm">
                       <span>⭐</span>
-                      {/* <span>{stay.rating}</span> */}
+                      {/* <span>{stay.rating?.toFixed(1)}</span> */}
                     </div>
                   </div>
 

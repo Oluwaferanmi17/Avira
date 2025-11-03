@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 import { FaPaperPlane } from "react-icons/fa";
 import { pusherClient } from "../../../lib/pusher";
 import { useSession } from "next-auth/react";

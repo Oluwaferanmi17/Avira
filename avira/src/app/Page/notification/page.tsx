@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { pusherClient } from "@/lib/pusher";
 import { FaCalendarCheck, FaCommentDots, FaStar, FaHome } from "react-icons/fa";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 import { useSession } from "next-auth/react";
 interface Notification {
   id: string;
@@ -28,17 +28,17 @@ export default function NotificationsPage() {
   }, []);
 
   // Real-time listener
-  useEffect(() => {
-    if (!currentUserId) return; // Wait until user data is loaded
-    const channel = pusherClient.subscribe(`user-${currentUserId}`);
-    pusherClient.subscribe("notifications-channel");
-    pusherClient.bind("new-notification", (newNotif: Notification) => {
-      setNotifications((prev) => [newNotif, ...prev]);
-    });
-    return () => {
-      pusherClient.unsubscribe("notifications-channel");
-    };
-  }, [currentUserId]);
+  // useEffect(() => {
+  //   if (!currentUserId) return; // Wait until user data is loaded
+  //   const channel = pusherClient.subscribe(`user-${currentUserId}`);
+  //   pusherClient.subscribe("notifications-channel");
+  //   pusherClient.bind("new-notification", (newNotif: Notification) => {
+  //     setNotifications((prev) => [newNotif, ...prev]);
+  //   });
+  //   return () => {
+  //     pusherClient.unsubscribe("notifications-channel");
+  //   };
+  // }, [currentUserId]);
 
   const clearAll = async () => {
     await fetch("/api/notifications/clear", { method: "DELETE" });

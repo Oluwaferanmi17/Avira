@@ -6,7 +6,7 @@ import { useHostEventStore } from "@/Store/useHostEventStore";
 import PhotoStep from "@/app/components/PhotoStep";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter } from "next/navigation";
-import NavBar from "@/app/components/NavBar";
+import NavBar from "@/app/components/Home/NavBar";
 // import { useSession } from "next-auth/react";
 type EventCategory = "Music" | "Festival" | "Culture" | "Film" | "Art";
 type StepKey = "basic" | "photos" | "location" | "schedule" | "review";

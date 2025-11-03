@@ -2,7 +2,7 @@
 // app/api/bookings/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
-import { pusherServer } from "@/lib/pusher";
+// import { pusherServer } from "@/lib/pusher";
 // Create a booking
 export async function POST(req: Request) {
   try {
@@ -50,11 +50,11 @@ export async function POST(req: Request) {
         total,
       },
     });
-    await pusherServer.trigger(`user-${userId}`, "new-notification", {
-      title: "Booking Confirmed 🎉",
-      message: "Your booking for Lekki Apartment has been confirmed.",
-      date: new Date().toLocaleString(),
-    });
+    // await pusherServer.trigger(`user-${userId}`, "new-notification", {
+    //   title: "Booking Confirmed 🎉",
+    //   message: "Your booking for Lekki Apartment has been confirmed.",
+    //   date: new Date().toLocaleString(),
+    // });
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error: any) {
