@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     if (!destination) {
       return NextResponse.json(
         { error: "Destination is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       } catch (error: any) {
         if (error.response?.status === 429 && attempt < 3) {
           console.log(
-            `⚠️ Rate limit hit. Retrying in ${attempt * 2} seconds...`
+            `⚠️ Rate limit hit. Retrying in ${attempt * 2} seconds...`,
           );
           await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
         } else {
@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     console.error("❌ Failed to generate itinerary:", error);
     return NextResponse.json(
       { error: "Failed to generate itinerary" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

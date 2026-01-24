@@ -518,15 +518,18 @@ model Review {
   comment   String?
   createdAt DateTime @default(now())
 
-  stayId Int?  @unique
+  stayId Int?  
   stay   Stay? @relation(fields: [stayId], references: [id])
 
-  eventId Int?   @unique
+  eventId Int?   
   event   Event? @relation(fields: [eventId], references: [id])
 
-  experienceId Int?        @unique
+  experienceId Int?        
   experience   Experience? @relation(fields: [experienceId], references: [id])
   reply        Reply?
+  @@unique([userId, stayId])
+  @@unique([userId, eventId])
+  @@unique([userId, experienceId])
   // reply Reply[]
 }
 
