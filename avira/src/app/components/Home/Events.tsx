@@ -1,105 +1,122 @@
 "use client";
-// import { motion } from "framer-motion";
-// import EventCard from "../EventCard";
+
 import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
+
 const Events = () => {
   return (
-    <section className="bg-gradient-to-br from-green-50 via-white to-orange-50 w-290 py-16 px-6 sm:px-12 lg:px-24 rounded-3xl shadow-sm ml-5 mt-10 mb-10">
+    <section className="bg-linear-to-br from-green-50 via-white to-orange-50 py-16 px-6 md:px-12 rounded-3xl my-16 max-w-7xl mx-auto overflow-hidden">
+      {/* Header */}
       <div className="text-center mb-12">
-        <span className="inline-block bg-[#00b894] text-white text-sm font-medium px-4 py-2 rounded-full mb-4 shadow-md">
+        <motion.span
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          className="inline-block bg-[#00b894] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full mb-4 shadow-md"
+        >
           Featured Event
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
+        </motion.span>
+        <h2 className="text-3xl md:text-5xl font-bold text-[#1c1c1c] mb-4">
           Don&apos;t Miss Out
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Experience the most anticipated events and festivals
+        </h2>
+        <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
+          Experience the most anticipated cultural festivals and music events in
+          Nigeria.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-br from-purple-50 to-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row w-250 mx-auto border border-purple-100"
-        >
-          {/* Image Section */}
-          <div className="relative md:w-1/2">
-            <img
-              src="https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=800&q=80"
-              alt="Felabration Festival"
-              className="object-cover h-full w-full"
-            />
 
-            <span className="absolute bottom-3 left-3 bg-white/80 text-gray-800 text-sm font-medium px-3 py-1 rounded-full shadow-sm">
-              Music & Culture
-            </span>
+      {/* Featured Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        className="group relative bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 flex flex-col md:flex-row hover:shadow-2xl transition-shadow duration-300"
+      >
+        {/* Image Section */}
+        <div className="relative w-full md:w-1/2 h-64 md:h-auto md:min-h-[400px]">
+          <Image
+            src="https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=800&q=80"
+            alt="Felabration Festival Crowd"
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-w-768px) 100vw, 50vw"
+            priority // Load this image quickly as it is featured
+          />
+          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm z-10">
+            🎵 Music & Culture
           </div>
+        </div>
 
-          {/* Content Section */}
-          <div className="p-8 flex flex-col justify-between md:w-1/2">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                Felabration Music Festival
-              </h2>
-              <p className="text-gray-600 mt-3 leading-relaxed">
-                Join us for the biggest celebration of Afrobeat music and
-                culture, honoring the legacy of Fela Kuti with performances from
-                top African artists, cultural exhibitions, and vibrant street
-                parties.
-              </p>
+        {/* Content Section */}
+        <div className="p-8 md:p-12 flex flex-col justify-center w-full md:w-1/2 bg-white/50 backdrop-blur-sm">
+          <div>
+            <h3 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+              Felabration 2026
+            </h3>
+            <p className="text-gray-600 mt-4 leading-relaxed text-sm md:text-base">
+              Join the biggest celebration of Afrobeat music and culture.
+              Honoring the legacy of Fela Kuti with performances from top
+              African artists, art exhibitions, and the famous &quot;Senior
+              Man&quot; debates at the New Afrika Shrine.
+            </p>
 
-              {/* Event Details */}
-              <div className="mt-6 space-y-3 text-gray-700">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="w-5 h-5 text-[#00b894]" />
-                  <span>October 15–22, 2024</span>
+            {/* Details Grid */}
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-3 text-gray-700">
+                <div className="p-2 bg-green-50 rounded-lg text-[#00b894]">
+                  <CalendarDays className="w-5 h-5" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#00b894]" />
-                  <span>New Afrika Shrine, Lagos</span>
+                <span className="font-medium">October 12–18, 2026</span>
+              </div>
+
+              <div className="flex items-center gap-3 text-gray-700">
+                <div className="p-2 bg-green-50 rounded-lg text-[#00b894]">
+                  <MapPin className="w-5 h-5" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#00b894]" />
-                  <span>10,000+ attendees</span>
+                <span className="font-medium">
+                  New Afrika Shrine, Ikeja, Lagos
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-gray-700">
+                <div className="p-2 bg-green-50 rounded-lg text-[#00b894]">
+                  <Users className="w-5 h-5" />
                 </div>
+                <span className="font-medium">30,000+ Attendees Expected</span>
               </div>
             </div>
-
-            {/* Price & Button */}
-            <div className="mt-8 border-t border-gray-200 pt-6 flex items-center justify-between">
-              <p className="text-xl font-semibold text-[#00b894]">
-                From <span className="font-bold">₦5000</span>
-              </p>
-              <Link
-                href="#"
-                className="bg-[#00b894] hover:bg-[#019a7a] text-white font-medium px-6 py-3 rounded-xl shadow-md transition-all duration-300 flex items-center gap-2"
-              >
-                Learn More
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
-            </div>
           </div>
-        </motion.div>
+
+          {/* Footer / CTA */}
+          <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="text-sm text-gray-500 mb-1">Starting from</p>
+              <p className="text-2xl font-bold text-[#00b894]">₦5,000</p>
+            </div>
+
+            <Link
+              href="/events/felabration"
+              className="w-full sm:w-auto bg-[#1c1c1c] hover:bg-[#00b894] text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg transition-colors duration-300 flex items-center justify-center gap-2"
+            >
+              Get Tickets
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* View All Link */}
+      <div className="flex justify-center mt-12">
+        <Link
+          href="/events"
+          className="group inline-flex items-center gap-2 text-gray-600 hover:text-[#00b894] font-semibold text-lg transition-colors"
+        >
+          View All Upcoming Events
+          <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+        </Link>
       </div>
-      <h1 className="text-[#00b894] hover:text-[#019a7a] text-center font-medium mt-10 text-xl">
-        View All Upcoming Events <ArrowRight className="w-4 h-4" />
-      </h1>
     </section>
   );
 };

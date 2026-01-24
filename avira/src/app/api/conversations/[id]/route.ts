@@ -17,11 +17,11 @@ export async function GET(req: Request, { params }: Params) {
     const { id } = params;
 
     const conversation = await prisma.conversation.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         messages: {
           include: { sender: true },
-          orderBy: { time: "asc" },
+          orderBy: { createdAt: "asc" },
         },
         participants: {
           include: { user: true },
@@ -32,7 +32,7 @@ export async function GET(req: Request, { params }: Params) {
     if (!conversation) {
       return NextResponse.json(
         { error: "Conversation not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function GET(req: Request, { params }: Params) {
     console.error("Error fetching conversation:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

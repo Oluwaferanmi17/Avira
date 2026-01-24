@@ -1,20 +1,34 @@
 "use client";
+
 import { motion } from "framer-motion";
 import RetreatCard from "../../components/Card";
 
+// Define the shape of your data for better type safety
+interface Destination {
+  id: number;
+  name: string;
+  image: string;
+  location: string;
+  description: string;
+  price: string;
+  rating: number;
+}
+
 const PopularDestinations = () => {
-  const destinations = [
+  const destinations: Destination[] = [
     {
-      name: "Savannah Retreat",
+      id: 1,
+      name: "Yankari Game Reserve",
       image:
-        "https://images.unsplash.com/photo-1616047006789-b7af5afb8c20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8aG91c2UlMjBpbnRlcmlvcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&q=60&w=600",
-      location: "Maasai Mara, Kenya",
+        "https://images.unsplash.com/photo-1616047006789-b7af5afb8c20?ixlib=rb-4.1.0&auto=format&fit=crop&q=60&w=600",
+      location: "Bauchi, Nigeria",
       description:
-        "Authentic safari experience with wildlife viewing and cultural immersion.",
+        "Authentic safari experience with wildlife viewing and warm springs.",
       price: "₦45,000/night",
       rating: 4.8,
     },
     {
+      id: 2,
       name: "Modern Loft in Lekki",
       image:
         "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=600&auto=format&fit=crop&q=60",
@@ -24,6 +38,7 @@ const PopularDestinations = () => {
       rating: 4.6,
     },
     {
+      id: 3,
       name: "Heritage Home",
       image:
         "https://images.unsplash.com/photo-1649068431121-72182cd8ca27?w=600&auto=format&fit=crop&q=60",
@@ -33,6 +48,7 @@ const PopularDestinations = () => {
       rating: 4.7,
     },
     {
+      id: 4,
       name: "Executive Suite",
       image:
         "https://images.unsplash.com/photo-1558442074-3c19857bc1dc?w=600&auto=format&fit=crop&q=60",
@@ -43,31 +59,60 @@ const PopularDestinations = () => {
     },
   ];
 
-  return (
-    <section className="py-16 bg-gray-50 px-6 md:px-12">
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-10 text-gray-800">
-        Popular Places to Stay
-      </h1>
+  // Animation variants for cleaner code
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2, // Stagger effect for items appearing one by one
+      },
+    },
+  };
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-        {destinations.map((d, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ y: 10 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
-            <RetreatCard
-              imageUrl={d.image}
-              title={d.name}
-              location={d.location}
-              price={d.price}
-              rating={d.rating}
-              description={d.description}
-            />
-          </motion.div>
-        ))}
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  return (
+    <section className="py-20 bg-gray-50 px-6 md:px-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-5xl font-bold text-[#1c1c1c] mb-4">
+            Popular Places to Stay
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            From luxury city apartments to serene nature reserves, discover the
+            best rated locations by travelers like you.
+          </p>
+        </div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+        >
+          {destinations.map((d) => (
+            <motion.div
+              key={d.id}
+              variants={itemVariants}
+              whileHover={{ y: -10 }} // Negative Y lifts the card UP
+              className="h-full"
+            >
+              <RetreatCard
+                imageUrl={d.image}
+                title={d.name}
+                location={d.location}
+                price={d.price}
+                rating={d.rating}
+                description={d.description}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

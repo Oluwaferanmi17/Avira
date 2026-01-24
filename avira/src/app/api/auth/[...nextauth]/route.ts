@@ -31,20 +31,31 @@ export const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password required");
         }
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
+
         if (!user || !user.hashedPassword) {
           throw new Error("Invalid credentials");
         }
+
         const isCorrectPassword = await bcrypt.compare(
           credentials.password,
           user.hashedPassword
         );
+
         if (!isCorrectPassword) {
           throw new Error("Invalid credentials");
         }
-        return user;
+
+        // ✅ MUST return a NextAuth-compatible User
+        return {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          image: user.profileImage ?? null,
+        };
       },
     }),
   ],

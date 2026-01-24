@@ -25,13 +25,13 @@ export async function POST(req: Request) {
     if (!receiverId) {
       return NextResponse.json(
         { error: "Receiver ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (receiverId === sender.id) {
       return NextResponse.json(
         { error: "You cannot start a conversation with yourself" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     // ✅ Step 4: Check if a conversation already exists between them
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     console.error("POST /api/conversations error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -97,7 +97,7 @@ export async function GET() {
         participants: {
           include: { user: { select: { id: true, name: true, image: true } } },
         },
-        messages: { take: 1, orderBy: { time: "desc" } },
+        messages: { take: 1, orderBy: { createdAt: "desc" } },
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -107,7 +107,7 @@ export async function GET() {
     console.error("GET /api/conversations error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

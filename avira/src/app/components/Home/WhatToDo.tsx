@@ -1,103 +1,107 @@
 "use client";
+
 import { motion } from "framer-motion";
 import Link from "next/link";
-import {
-  FaBed,
-  FaCalendarAlt,
-  FaMapMarkedAlt,
-  FaPenFancy,
-} from "react-icons/fa";
+import { Bed, CalendarDays, Map, ScrollText, ArrowRight } from "lucide-react";
 
 const WhatToDo = () => {
   const actions = [
     {
       title: "Find a Place to Stay",
-      description: "Browse unique homes, hotels, and stays across Nigeria.",
-      icon: <FaBed className="text-3xl text-[#00b894]" />,
-      href: "/Page/stay",
+      description:
+        "Browse unique homes, hotels, and luxury stays across Nigeria.",
+      icon: <Bed className="w-8 h-8 text-[#00b894]" />,
+      href: "/stays", // Updated to standard routing convention
     },
     {
       title: "Explore Events",
-      description: "Discover festivals, concerts, and cultural activities.",
-      icon: <FaCalendarAlt className="text-3xl text-[#00b894]" />,
-      href: "/Page/events",
+      description:
+        "Discover festivals, concerts, and cultural activities near you.",
+      icon: <CalendarDays className="w-8 h-8 text-[#00b894]" />,
+      href: "/events",
     },
     {
       title: "Local Experiences",
-      description: "Visit amusement parks, museums, and food tours.",
-      icon: <FaMapMarkedAlt className="text-3xl text-[#00b894]" />,
-      href: "/Page/experiences",
+      description: "Visit amusement parks, museums, and guided food tours.",
+      icon: <Map className="w-8 h-8 text-[#00b894]" />,
+      href: "/experiences",
     },
     {
-      title: "Track your journeys",
+      title: "Track Your Journeys",
       description:
-        "Discover your stays, events, and experiences past memories and future plans await.",
-      icon: <FaPenFancy className="text-3xl text-[#00b894]" />,
-      href: "/Page/trips",
+        "Keep a digital diary of your past memories and future plans.",
+      icon: <ScrollText className="w-8 h-8 text-[#00b894]" />,
+      href: "/trips",
     },
   ];
 
   return (
-    <section className="py-16 bg-gray-50 px-6 md:px-12">
-      <motion.h2
-        initial={{ x: -600 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-3xl md:text-4xl font-bold text-center mb-10 text-gray-800"
-      >
-        What would you like to do?
-      </motion.h2>
+    <section className="py-20 bg-gray-50 px-6 sm:px-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+            What would you like to do?
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+            Curate your perfect Nigerian adventure with our all-in-one travel
+            tools.
+          </p>
+        </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 place-items-center">
-        {actions.map((action, idx) => (
-          <Link
-            key={idx}
-            href={action.href}
-            className="group w-full flex justify-center"
-          >
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
-              className="
-                w-[190px] h-[254px]
-                bg-[rgba(217,217,217,0.58)]
-                border border-white
-                shadow-[12px_17px_51px_rgba(0,0,0,0.22)]
-                backdrop-blur-[6px]
-                rounded-[17px]
-                flex flex-col items-center justify-center
-                text-center
-                cursor-pointer select-none
-                font-bold text-black
-                transition-all duration-500
-                hover:border-[#00b894]
-                active:scale-95 active:rotate-[1.7deg]
-              "
-            >
-              <div className="p-3 bg-[#d1f5ed] rounded-full mb-3">
-                {action.icon}
-              </div>
+        {/* Grid Container */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {actions.map((action, idx) => (
+            <Link key={idx} href={action.href} className="group h-full">
+              <motion.div
+                whileHover={{ y: -8 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: idx * 0.1 }}
+                className="
+                  h-full
+                  bg-white
+                  rounded-3xl
+                  p-6
+                  border border-gray-100
+                  shadow-sm hover:shadow-xl
+                  hover:border-[#00b894]/30
+                  transition-all duration-300
+                  flex flex-col items-center text-center
+                  relative overflow-hidden
+                "
+              >
+                {/* Decorative Background Blob (Subtle) */}
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-green-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-              <h3 className="text-lg font-semibold text-gray-800 group-hover:text-[#00b894] transition">
-                {action.title}
-              </h3>
+                {/* Icon Circle */}
+                <div className="w-16 h-16 bg-[#d1f5ed] rounded-2xl flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform duration-300 z-10">
+                  {action.icon}
+                </div>
 
-              <p className="text-sm text-gray-600 mt-2 px-3">
-                {action.description}
-              </p>
+                {/* Content */}
+                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#00b894] transition-colors z-10">
+                  {action.title}
+                </h3>
 
-              <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="text-sm font-medium text-[#00b894]">
-                  Click to explore →
-                </span>
-              </div>
-            </motion.div>
-          </Link>
-        ))}
+                <p className="text-gray-500 text-sm leading-relaxed mb-6 z-10">
+                  {action.description}
+                </p>
+
+                {/* Hover Action */}
+                <div className="mt-auto flex items-center gap-2 text-[#00b894] font-semibold text-sm opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-10">
+                  Start Exploring <ArrowRight className="w-4 h-4" />
+                </div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

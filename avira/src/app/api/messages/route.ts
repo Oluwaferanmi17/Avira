@@ -12,13 +12,10 @@ export async function POST(req: Request) {
     }
 
     const { conversationId, text } = await req.json();
-
-    // ✅ Validate data
     if (!conversationId || !text) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // ✅ Find sender
     const sender = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -26,7 +23,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // ✅ Create new message
     const message = await prisma.message.create({
       data: {
         text,
@@ -35,36 +31,29 @@ export async function POST(req: Request) {
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
+          select: { id: true, name: true, image: true },
         },
       },
     });
 
-    // ✅ Update conversation timestamp
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     });
-    // await pusherServer.trigger(`user-${userId}`, "new-notification", {
-    //   title: "Booking Confirmed 🎉",
-    //   message: "Your booking for Lekki Apartment has been confirmed.",
-    //   date: new Date().toLocaleString(),
-    // });
+
+    // ✅ Real-time chat update
     await pusherServer.trigger(
       `conversation-${conversationId}`,
       "new-message",
-      message
+      message,
     );
+
     return NextResponse.json(message);
   } catch (error) {
     console.error("POST /api/messages error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -72,18 +61,27 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const conversationId = searchParams.get("conversationId");
+    const conversationIdParam = searchParams.get("conversationId");
 
-    if (!conversationId) {
+    if (!conversationIdParam) {
       return NextResponse.json(
         { error: "Missing conversationId" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const conversationId = Number(conversationIdParam);
+
+    if (isNaN(conversationId)) {
+      return NextResponse.json(
+        { error: "Invalid conversationId" },
+        { status: 400 },
       );
     }
 
     const messages = await prisma.message.findMany({
       where: { conversationId },
-      orderBy: { time: "asc" },
+      orderBy: { createdAt: "asc" },
       include: {
         sender: {
           select: { id: true, name: true, image: true },
@@ -96,7 +94,7 @@ export async function GET(req: Request) {
     console.error("GET /api/messages error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

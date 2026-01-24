@@ -1,38 +1,63 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Image from "next/image";
 import NavBar from "@/app/components/Home/NavBar";
-import { FaPaperPlane } from "react-icons/fa";
-import { pusherClient } from "../../../lib/pusher";
+import { FaPaperPlane, FaSpinner } from "react-icons/fa";
+import { pusherClient } from "@/lib/pusher"; // Ensure path is correct
 import { useSession } from "next-auth/react";
+
+// --- Type Definitions ---
 interface User {
   id: string;
   name: string;
   image?: string;
+  email?: string;
+}
+
+interface Participant {
+  user: User;
+}
+
+interface Message {
+  id: string;
+  text: string;
+  createdAt: string;
+  senderId: User;
 }
 
 interface Conversation {
   id: string;
-  participants: { user: User }[];
+  participants: Participant[];
   updatedAt: string;
+  lastMessage?: string; // Optional: good for sidebar preview
 }
 
 export default function MessagesPage({
   conversationId,
 }: {
-  conversationId: string;
+  conversationId?: string; // Made optional to handle direct navigation
 }) {
+  // --- State ---
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] =
-    useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(
+    conversationId || null,
+  );
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
-  // ✅ Fetch all guest conversations
+
+  // Derive the active conversation object from the ID
+  const activeChat = useMemo(
+    () => conversations.find((c) => c.id === activeChatId),
+    [conversations, activeChatId],
+  );
+
+  // --- 1. Fetch Conversations ---
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -40,176 +65,237 @@ export default function MessagesPage({
         if (!res.ok) throw new Error("Failed to fetch conversations");
         const data = await res.json();
         setConversations(data);
+
+        // If no ID provided via props, optionally select the first one
+        if (!activeChatId && data.length > 0) {
+          // setActiveChatId(data[0].id); // Uncomment if you want auto-select
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Error loading conversations:", error);
       }
     };
     fetchConversations();
-  }, []);
+  }, [activeChatId]);
 
-  // ✅ Fetch messages when user selects a conversation
+  // --- 2. Fetch Messages ---
   useEffect(() => {
+    if (!activeChatId) return;
+
     const fetchMessages = async () => {
-      if (!selectedConversation) return;
+      setIsLoadingMessages(true);
       try {
-        const res = await fetch(
-          `/api/messages?conversationId=${selectedConversation.id}`
-        );
+        const res = await fetch(`/api/messages?conversationId=${activeChatId}`);
         if (!res.ok) throw new Error("Failed to fetch messages");
         const data = await res.json();
         setMessages(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error loading messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     };
     fetchMessages();
-  }, [selectedConversation]);
+  }, [activeChatId]);
+
+  // --- 3. Pusher Subscription ---
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!activeChatId) return;
 
-    const channel = pusherClient.subscribe(
-      `conversation-${selectedConversation.id}`
-    );
+    const channelName = `conversation-${activeChatId}`;
+    const channel = pusherClient.subscribe(channelName);
 
-    channel.bind("new-message", (message: any) => {
+    const messageHandler = (message: Message) => {
       setMessages((prev) => {
-        const exists = prev.some(
-          (m) => m.id === message.id || m.time === message.time
-        );
-        return exists ? prev : [...prev, message];
+        // Prevent duplicates based on ID
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
       });
-    });
+
+      // Optional: Update conversation list "last updated" time locally
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeChatId
+            ? { ...c, updatedAt: new Date().toISOString() }
+            : c,
+        ),
+      );
+    };
+
+    channel.bind("new-message", messageHandler);
 
     return () => {
-      pusherClient.unsubscribe(`conversation-${selectedConversation.id}`);
+      channel.unbind("new-message", messageHandler);
+      pusherClient.unsubscribe(channelName);
     };
-  }, [selectedConversation]);
+  }, [activeChatId]);
+
+  // --- 4. Auto Scroll ---
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-  // ✅ Send a new message
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return;
+  }, [messages, isLoadingMessages]);
+
+  // --- Handlers ---
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeChatId) return;
+
+    const messageToSend = newMessage;
+    setNewMessage(""); // Clear immediately for UX
 
     try {
-      const res = await fetch("/api/messages", {
+      await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          text: newMessage,
+          conversationId: activeChatId,
+          text: messageToSend,
         }),
       });
-
-      if (res.ok) {
-        // const msg = await res.json();
-        // setMessages((prev) => [...prev, msg]);
-        setNewMessage("");
-      }
+      // No need to setMessages here; Pusher will handle the update
     } catch (error) {
-      console.error(error);
+      console.error("Failed to send:", error);
+      setNewMessage(messageToSend); // Restore text on error
     }
   };
 
+  // Helper to find the "other" user in a conversation
+  const getOtherUser = (conversation: Conversation) => {
+    return conversation.participants.find((p) => p.user.id !== currentUserId)
+      ?.user;
+  };
+
   return (
-    <div>
+    <div className="flex flex-col h-screen bg-white">
       <NavBar />
-      <div className="flex h-screen">
-        {/* Left Sidebar - Conversation List */}
-        <div className="w-1/3 border-r overflow-y-auto p-4">
-          <h2 className="text-lg font-semibold mb-4">Messages</h2>
-          {conversations.map((c) => {
-            const otherUser = c.participants.find(
-              (p) => p.user.name !== "You"
-            )?.user;
-            return (
-              <div
-                key={c.id}
-                className={`flex items-center gap-3 p-3 mb-2 rounded-lg cursor-pointer hover:bg-gray-100 ${
-                  selectedConversation?.id === c.id ? "bg-gray-200" : ""
-                }`}
-                onClick={() => setSelectedConversation(c)}
-              >
-                {otherUser?.image && (
-                  <Image
-                    src={otherUser.image}
-                    alt={otherUser.name}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                )}
-                <div>
-                  <p className="font-medium">{otherUser?.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(c.updatedAt).toLocaleDateString()}
-                  </p>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* --- Left Sidebar: Conversation List --- */}
+        <div className="w-1/3 md:w-1/4 border-r border-gray-200 flex flex-col">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800">Messages</h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2">
+            {conversations.map((c) => {
+              const otherUser = getOtherUser(c);
+              const isActive = activeChatId === c.id;
+
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => setActiveChatId(c.id)}
+                  className={`flex items-center gap-3 p-3 mb-1 rounded-xl cursor-pointer transition-colors ${
+                    isActive ? "bg-gray-100" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    {otherUser?.image ? (
+                      <Image
+                        src={otherUser.image}
+                        alt={otherUser.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-gray-500 font-bold">
+                        {otherUser?.name?.[0] || "?"}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="overflow-hidden">
+                    <p className="font-semibold text-gray-900 truncate">
+                      {otherUser?.name || "Unknown User"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(c.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Right Panel - Chat Window */}
-        <div className="flex-1 flex flex-col h-screen">
-          {selectedConversation ? (
+        {/* --- Right Panel: Chat Window --- */}
+        <div className="flex-1 flex flex-col bg-gray-50">
+          {activeChatId ? (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((m, index) => {
-                  const isSender = m.senderId === currentUserId; // or m.senderId === session.user.id if available
-                  return (
-                    <div
-                      key={`${m.id || m._id || index}-${m.time || Date.now()}`}
-                      className={`flex ${
-                        isSender ? "justify-end" : "justify-start"
-                      }`}
-                    >
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {isLoadingMessages ? (
+                  <div className="flex h-full items-center justify-center">
+                    <FaSpinner className="animate-spin text-gray-400 text-2xl" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-gray-400 text-sm">
+                    No messages yet. Say hi!
+                  </div>
+                ) : (
+                  messages.map((m) => {
+                    const isSender =
+                      Number(m.senderId) === Number(currentUserId);
+
+                    return (
                       <div
-                        className={`p-3 rounded-2xl max-w-xs text-sm shadow-md
-                  ${
-                    isSender
-                      ? "bg-[#00b894] text-white rounded-br-none"
-                      : "bg-gray-200 text-gray-900 rounded-bl-none"
-                  }`}
+                        key={m.id}
+                        className={`flex ${isSender ? "justify-end" : "justify-start"}`}
                       >
-                        <p>{m.text}</p>
-                        <span
-                          className={`text-[10px] mt-1 block ${
-                            isSender ? "text-blue-100" : "text-gray-600"
+                        <div
+                          className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm shadow-sm ${
+                            isSender
+                              ? "bg-[#00b894] text-white rounded-tr-none"
+                              : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
                           }`}
                         >
-                          {new Date(m.time).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </span>
+                          <p>{m.text}</p>
+                          <span
+                            className={`text-[10px] mt-1 block text-right ${
+                              isSender ? "text-green-100" : "text-gray-400"
+                            }`}
+                          >
+                            {new Date(m.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
-                      <div ref={messagesEndRef} />
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
               </div>
-              <div className="p-4 border-t flex-shrink-0 flex bg-white sticky bottom-0">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <button
-                  onClick={sendMessage}
-                  className="bg-[#00b894] text-white p-2 rounded-lg hover:bg-[#019a7a] transition"
-                >
-                  <FaPaperPlane />
-                </button>
+
+              {/* Input Area */}
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 border border-gray-200 focus-within:ring-2 focus-within:ring-[#00b894]/50 focus-within:border-[#00b894]">
+                  <input
+                    type="text"
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-500"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim()}
+                    className={`p-2 rounded-full transition-all ${
+                      newMessage.trim()
+                        ? "bg-[#00b894] text-white hover:bg-[#019a7a] shadow-md"
+                        : "bg-gray-300 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <FaPaperPlane className="text-sm" />
+                  </button>
+                </div>
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center flex-1">
-              <p className="text-gray-500">
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+              <FaPaperPlane className="text-6xl mb-4 opacity-10" />
+              <p className="font-medium">
                 Select a conversation to start chatting
               </p>
             </div>

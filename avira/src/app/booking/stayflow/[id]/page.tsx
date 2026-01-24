@@ -1,20 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useMemo, useState, useEffect } from "react";
-import NavBar from "../../../components/Home/NavBar";
-import { MapPin, Users } from "lucide-react";
-import { differenceInCalendarDays, format } from "date-fns";
+
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useBookingStore } from "@/Store/useBookingStore";
-import { withAuth } from "../../../components/withAuth";
+import { useSession } from "next-auth/react";
+import { MapPin, Users, X } from "lucide-react";
+import { differenceInCalendarDays, format } from "date-fns";
+
+// Components
+import NavBar from "../../../components/Home/NavBar";
 import Map from "../../../components/AviraMapCore";
 import { Calendar } from "../../../../components/ui/calendar";
-import { useSession } from "next-auth/react";
-// import GoogleMapComponent from "@/app/components/GoogleMapComponent";
+import PhotoGallery from "@/app/components/PhotoGallery";
+import { withAuth } from "../../../components/withAuth";
+
+// Store
+import { useBookingStore } from "@/Store/useBookingStore";
+import CustomRangeCalendar from "@/app/components/CustomRangeCalendar";
+
+// --- Types ---
 interface DateRange {
   from?: Date;
   to?: Date;
 }
+
 interface StayType {
   id: string;
   title: string;
@@ -24,20 +33,36 @@ interface StayType {
   pricing?: { basePrice: number; cleaningFee: number; serviceFee: number };
   address?: { city: string; country: string; line1: string };
 }
-import PhotoGallery from "@/app/components/PhotoGallery";
+
+// --- Helper for Currency ---
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
 function StayDetails() {
   const { id } = useParams();
   const router = useRouter();
-  const [stay, setStay] = useState<StayType | null>(null);
+  const { data: session } = useSession();
   const booking = useBookingStore((state) => state.booking);
-  const [range, setRange] = useState<DateRange>({});
+
+  const [stay, setStay] = useState<StayType | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Form State
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
   const [guests, setGuests] = useState<number>(2);
   const [note, setNote] = useState<string>("");
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [, setLoading] = useState(true);
-  // const [showAll, setShowAll] = useState(false);
-  const { data: session } = useSession();
+
+  // Refs for click outside logic
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
+
+  // 1. Fetch Data
   useEffect(() => {
     if (!id) return;
     const fetchStay = async () => {
@@ -52,15 +77,42 @@ function StayDetails() {
         setLoading(false);
       }
     };
-    // if (id) fetchStay();
     fetchStay();
   }, [id]);
+
+  // 2. Click Outside & Escape Key Listener for Calendar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        calendarContainerRef.current &&
+        !calendarContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowCalendar(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowCalendar(false);
+    };
+
+    if (showCalendar) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showCalendar]);
+
+  // 3. Calculations
   const nights = useMemo(() => {
-    if (range.from && range.to) {
+    if (range?.from && range?.to) {
       return Math.max(0, differenceInCalendarDays(range.to, range.from));
     }
     return 0;
   }, [range]);
+
   const cost = useMemo(() => {
     if (!stay) return { subtotal: 0, cleaning: 0, service: 0, total: 0 };
     const subtotal = nights * (stay.pricing?.basePrice || 0);
@@ -69,59 +121,11 @@ function StayDetails() {
     const total = subtotal + cleaning + service;
     return { subtotal, cleaning, service, total };
   }, [nights, stay]);
-  if (!stay) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-  const proceedToConfirmation = async () => {
-    // const session = await getServerSession(authOptions);
-    if (!session) {
-      alert("You must be logged in to book");
-      return;
-    }
-    if (
-      !booking ||
-      booking.type !== "stay" ||
-      !booking.stay ||
-      !booking.dates
-    ) {
-      alert("Booking data is incomplete");
-      return;
-    }
-    try {
-      const res = await fetch("/api/bookingStay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: session?.user?.id, // logged in user
-          stayId: booking.stay.id, // 👈 from store
-          checkIn: booking.dates.checkIn,
-          checkOut: booking.dates.checkOut,
-          guests: booking.guests,
-          note: booking.note,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Booking failed");
-      }
-      const newBooking = await res.json();
-      useBookingStore.getState().setBooking({
-        ...booking,
-        dbId: newBooking.id,
-      });
-      router.push(`/booking/confirm/${newBooking.id}`);
-    } catch (err: any) {
-      console.error("Error confirming booking:", err);
-      alert(err.message);
-    }
-  };
-  function handleBookNow() {
-    if (!stay) return;
-    if (!range.from || !range.to || nights <= 0) return;
+
+  // 4. Handlers
+  const handleBookNow = () => {
+    if (!stay || !range?.from || !range?.to || nights <= 0) return;
+
     useBookingStore.getState().setBooking({
       reservationId: crypto.randomUUID(),
       type: "stay",
@@ -152,14 +156,90 @@ function StayDetails() {
     });
 
     setSummaryOpen(true);
+  };
+
+  const proceedToConfirmation = async () => {
+    if (!session) {
+      alert("You must be logged in to book"); // Consider using toast here
+      return;
+    }
+
+    // Re-verify store data integrity
+    const currentBooking = useBookingStore.getState().booking;
+
+    if (
+      !currentBooking ||
+      currentBooking.type !== "stay" ||
+      !currentBooking.stay ||
+      !currentBooking.dates
+    ) {
+      alert("Booking data is incomplete. Please try again.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/bookingStay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session.user?.id,
+          stayId: currentBooking.stay.id,
+          checkIn: currentBooking.dates.checkIn,
+          checkOut: currentBooking.dates.checkOut,
+          guests: currentBooking.guests,
+          note: currentBooking.note,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Booking failed");
+      }
+
+      const newBooking = await res.json();
+
+      // Update store with DB ID
+      useBookingStore.getState().setBooking({
+        ...currentBooking,
+        dbId: newBooking.id,
+      });
+
+      router.push(`/booking/confirm/${newBooking.id}`);
+    } catch (err: any) {
+      console.error("Error confirming booking:", err);
+      alert(err.message);
+    }
+  };
+
+  const bookDisabled = !range?.from || !range?.to || nights <= 0;
+
+  // 5. Loading State UI
+  if (loading || !stay) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white">
+        <NavBar />
+        <div className="container mx-auto px-4 py-8 animate-pulse">
+          <div className="h-8 bg-slate-200 w-1/3 rounded mb-4"></div>
+          <div className="h-64 bg-slate-200 w-full rounded-xl mb-8"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="h-32 bg-slate-200 rounded-xl"></div>
+              <div className="h-32 bg-slate-200 rounded-xl"></div>
+            </div>
+            <div className="lg:col-span-4 h-64 bg-slate-200 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
-  const bookDisabled = !range.from || !range.to || nights <= 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">
       <NavBar />
       <main className="flex-1">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col gap-2">
+          {/* Header Section */}
+          <div className="flex flex-col gap-2 mb-6">
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               {stay.title}
             </h1>
@@ -170,231 +250,257 @@ function StayDetails() {
                   ? `${stay.address.line1}, ${stay.address.city}, ${stay.address.country}`
                   : "No location"}
               </div>
-              <div className="text-sm">•</div>
+              <span className="text-slate-300">|</span>
               <div className="inline-flex items-center gap-1 text-sm">
                 <Users className="h-4 w-4" />
-                {guests} guests
+                {guests} guests allowed
               </div>
-              {/* <div className="text-sm">•</div> */}
-              {/* <div>{Users?.name}</div> */}
-              {/* {stay.tags && stay.tags.length > 0 && (
-                <>
-                  <div className="text-sm">•</div>
-                  <div className="flex flex-wrap gap-2">
-                    {stay.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="text-xs px-2 py-1 rounded-full border border-slate-200 bg-slate-50"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              )} */}
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <section className="lg:col-span-8 space-y-6">
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Column: Details */}
+            <section className="lg:col-span-8 space-y-8">
               <PhotoGallery photos={stay.photos} />
-              <div className="rounded-2xl border border-slate-200 p-4 bg-white">
-                <h2 className="font-semibold mb-2">About this place</h2>
-                <p className="text-slate-700">{stay.description}</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 p-4 bg-white">
-                <h2 className="font-semibold mb-2">Amenities</h2>
-                <div className="space-x-5">
-                  {stay.amenities?.length ? (
-                    stay.amenities.map((a) => (
-                      <span
-                        key={a}
-                        className="text-sm px-3 py-1 rounded-full border border-slate-200 bg-slate-50 
-                        text-blue-500
-                      
-                        "
-                      >
-                        {a}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-slate-500">No amenities listed.</p>
-                  )}
+
+              <div className="space-y-6">
+                <div className="py-6 border-b border-slate-100">
+                  <h2 className="text-xl font-semibold mb-3">
+                    About this place
+                  </h2>
+                  <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                    {stay.description}
+                  </p>
                 </div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 p-4 bg-white">
-                <h2 className="font-semibold mb-2">Where you’ll be</h2>
-                <p className="mt-2">
-                  {" "}
-                  {stay.address
-                    ? `${stay.address.line1}, ${stay.address.city}, ${stay.address.country}`
-                    : "No address"}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {/* <GoogleMapComponent lat={6.5244} lng={3.3792} />{" "} */}
-                  <Map />
+
+                <div className="py-6 border-b border-slate-100">
+                  <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {stay.amenities?.length ? (
+                      stay.amenities.map((a) => (
+                        <span
+                          key={a}
+                          className="text-sm px-4 py-2 rounded-lg border border-slate-100 bg-slate-50 text-slate-700"
+                        >
+                          {a}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-slate-500 italic">
+                        No amenities listed.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="py-6">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Where you’ll be
+                  </h2>
+                  <p className="mb-4 text-slate-600">
+                    {stay.address
+                      ? `${stay.address.line1}, ${stay.address.city}`
+                      : "Address available after booking"}
+                  </p>
+                  <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-200">
+                    <Map />
+                  </div>
                 </div>
               </div>
             </section>
-            <aside className="lg:col-span-4">
-              <div className="rounded-2xl border border-slate-200 p-4 bg-white sticky top-24 space-y-4">
-                <div>
-                  <div className="text-2xl font-semibold">
-                    ₦{stay.pricing?.basePrice || 0}
+
+            {/* Right Column: Booking Widget */}
+            <aside className="lg:col-span-4 relative">
+              <div className="sticky top-24 rounded-2xl border border-slate-200 p-6 bg-white shadow-sm space-y-6">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <span className="text-2xl font-bold">
+                      {formatCurrency(stay.pricing?.basePrice || 0)}
+                    </span>
+                    <span className="text-sm text-slate-600"> / night</span>
                   </div>
-                  <div className="text-sm text-slate-600">/ night</div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-600">
+
+                {/* Date Picker Input */}
+                <div className="relative" ref={calendarContainerRef}>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
                     Dates
                   </label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={
-                      range.from && range.to
-                        ? `${format(range.from, "PP")} → ${format(
-                            range.to,
-                            "PP"
-                          )}`
-                        : "Add dates"
-                    }
-                    required
+                  <div
+                    className="w-full rounded-lg border border-slate-300 px-3 py-3 text-sm text-slate-700 cursor-pointer hover:border-slate-400 transition-colors flex items-center justify-between"
                     onClick={() => setShowCalendar(!showCalendar)}
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer"
-                  />
+                  >
+                    <span>
+                      {range?.from
+                        ? `${format(range.from, "MMM dd")} ${
+                            range.to ? `- ${format(range.to, "MMM dd")}` : ""
+                          }`
+                        : "Check-in - Check-out"}
+                    </span>
+                  </div>
+
                   {showCalendar && (
-                    <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <Calendar
-                        mode="range"
-                        selected={range as any}
-                        onSelect={(v: any) => setRange(v ?? {})}
-                        numberOfMonths={2}
-                        initialFocus
+                    <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
+                      {/* USE YOUR NEW COMPONENT HERE */}
+                      <CustomRangeCalendar
+                        value={range}
+                        onChange={(val) => setRange(val)}
                       />
                     </div>
                   )}
                 </div>
+
+                {/* Guest Counter */}
                 <div>
-                  <label className="text-xs font-medium text-slate-600">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
                     Guests
                   </label>
-                  <div className="mt-1 flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
-                    <div className="inline-flex items-center gap-2 text-slate-700">
-                      <Users className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm">
-                        {guests} {guests > 1 ? "guests" : "guest"}
-                      </span>
-                    </div>
-                    <div className="inline-flex items-center gap-2">
+                  <div className="flex items-center justify-between rounded-lg border border-slate-300 px-3 py-2">
+                    <span className="text-sm text-slate-700">
+                      {guests} {guests > 1 ? "guests" : "guest"}
+                    </span>
+                    <div className="flex items-center gap-3">
                       <button
-                        className="h-8 px-2 border rounded-md bg-transparent"
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:border-slate-800 disabled:opacity-50"
                         onClick={() => setGuests((g) => Math.max(1, g - 1))}
+                        disabled={guests <= 1}
                       >
                         –
                       </button>
                       <button
-                        className="h-8 px-2 border rounded-md bg-transparent"
-                        onClick={() => setGuests((g) => Math.min(6, g + 1))}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:border-slate-800 disabled:opacity-50"
+                        onClick={() => setGuests((g) => Math.min(10, g + 1))} // Cap at 10 or stay capacity
+                        disabled={guests >= 10}
                       >
                         +
                       </button>
                     </div>
                   </div>
                 </div>
+
+                {/* Note */}
                 <div>
-                  <label className="text-xs font-medium text-slate-600">
-                    Note to host (optional)
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
+                    Note to host (Optional)
                   </label>
                   <textarea
-                    placeholder="e.g., Arriving late due to flight."
+                    rows={2}
+                    placeholder="I'll be arriving around 2pm..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-slate-500"
                   />
                 </div>
-                <div className="rounded-md border border-slate-200 p-3 text-sm space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-700">
-                      ₦{stay.pricing?.basePrice || 0} × {nights || 0} night
-                      {nights === 1 ? "" : "s"}
-                    </span>
-                    <span className="font-medium">₦{cost.subtotal}</span>
+
+                {/* Cost Breakdown */}
+                {nights > 0 && (
+                  <div className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between text-slate-600 text-sm">
+                      <span className="underline">
+                        {formatCurrency(stay.pricing?.basePrice || 0)} ×{" "}
+                        {nights} nights
+                      </span>
+                      <span>{formatCurrency(cost.subtotal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600 text-sm">
+                      <span className="underline">Cleaning fee</span>
+                      <span>{formatCurrency(cost.cleaning)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600 text-sm">
+                      <span className="underline">Service fee</span>
+                      <span>{formatCurrency(cost.service)}</span>
+                    </div>
+                    <div className="h-px bg-slate-200 my-2" />
+                    <div className="flex items-center justify-between font-semibold text-lg">
+                      <span>Total</span>
+                      <span>{formatCurrency(cost.total)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-700">Cleaning fee</span>
-                    <span className="font-medium">₦{cost.cleaning}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-700">Service fee</span>
-                    <span className="font-medium">₦{cost.service}</span>
-                  </div>
-                  <div className="h-px bg-slate-200 my-2" />
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Total</span>
-                    <span className="font-semibold">₦{cost.total}</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-2">
-                    You won’t be charged yet (demo).
-                  </div>
-                </div>
+                )}
+
                 <button
-                  className={`w-full py-2 rounded-md text-white ${
+                  className={`w-full py-3.5 rounded-lg text-white font-semibold transition-all ${
                     bookDisabled
-                      ? "bg-[#85ccbe] cursor-not-allowed"
-                      : "bg-[#00b894] hover:bg-[#018c71]"
+                      ? "bg-slate-300 cursor-not-allowed"
+                      : "bg-[#00b894] hover:bg-[#019678] active:scale-[0.98]"
                   }`}
                   disabled={bookDisabled}
                   onClick={handleBookNow}
                 >
-                  Book Now
+                  {bookDisabled ? "Select dates" : "Reserve"}
                 </button>
+
+                <div className="text-center text-xs text-slate-500">
+                  You won’t be charged yet
+                </div>
               </div>
             </aside>
           </div>
         </div>
       </main>
+
+      {/* Confirmation Modal */}
       {summaryOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-96 space-y-4">
-            <h2 className="text-lg font-semibold">Booking Summary</h2>
-            <div className="space-y-2 text-sm text-slate-700">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Review Trip</h2>
+              <button
+                onClick={() => setSummaryOpen(false)}
+                className="p-2 hover:bg-slate-100 rounded-full"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Check-in</span>
-                <span className="font-medium">
-                  {range.from ? format(range.from, "PP") : "—"}
-                </span>
+                <div>
+                  <p className="text-xs text-slate-500 font-bold uppercase">
+                    Dates
+                  </p>
+                  <p className="font-medium text-slate-900">
+                    {range?.from && range?.to
+                      ? `${format(range.from, "MMM d")} – ${format(
+                          range.to,
+                          "MMM d, yyyy",
+                        )}`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500 font-bold uppercase">
+                    Guests
+                  </p>
+                  <p className="font-medium text-slate-900">{guests} guests</p>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Check-out</span>
-                <span className="font-medium">
-                  {range.to ? format(range.to, "PP") : "—"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">Guests</span>
-                <span className="font-medium">{guests}</span>
-              </div>
-              <div className="h-px bg-slate-200" />
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Total</span>
-                <span className="font-semibold">₦{cost.total}</span>
+
+              <div className="bg-slate-50 p-4 rounded-xl space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Total (NGN)</span>
+                  <span className="font-bold text-slate-900">
+                    {formatCurrency(cost.total)}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
               <button
-                className="px-4 py-2 border rounded-md bg-transparent"
+                className="flex-1 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50"
                 onClick={() => setSummaryOpen(false)}
               >
-                Cancel
+                Back
               </button>
               <button
-                className="px-4 py-2 bg-[#00b894] text-white rounded-md hover:bg-[#018c71]"
+                className="flex-1 py-3 text-sm font-semibold bg-[#00b894] text-white rounded-xl hover:bg-[#019678]"
                 onClick={() => {
                   setSummaryOpen(false);
                   proceedToConfirmation();
                 }}
               >
-                Confirm
+                Confirm Booking
               </button>
             </div>
           </div>
@@ -403,4 +509,5 @@ function StayDetails() {
     </div>
   );
 }
+
 export default withAuth(StayDetails);

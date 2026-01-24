@@ -2,25 +2,32 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   // provider = "mongodb"
+//    provider = "postgresql"
+//    url      = env("DATABASE_URL")
+// }
+
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  // id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  id             Int          @id @default(autoincrement())
   name           String?
-  email          String?   @unique
+  email          String?      @unique
   emailVerified  DateTime?
   image          String?
   hashedPassword String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime? @updatedAt
-
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
+  payments       Payment[]
   // relations to listings
-  stays       Stay[]       @relation("UserStays")
-  experiences Experience[] @relation("UserExperiences")
-  events      Event[]      @relation("UserEvents")
+  stays          Stay[]       @relation("UserStays")
+  experiences    Experience[] @relation("UserExperiences")
+  events         Event[]      @relation("UserEvents")
 
   // booking relations
   stayBookings             StayBooking[]             @relation("UserStayBookings")
@@ -34,38 +41,49 @@ model User {
   favourites               Favourite[]
   accounts                 Account[]
   listings                 Listing[]
-  reservations             Reservation[]
+  // reservations             Reservation[]
   trips                    Trip[]                    @relation("UserTrips")
   bannerImage              String?
   profileImage             String?
-  HostProfile  HostProfile[]
+  phone                    String?
+  bio                      String?
+  HostProfile              HostProfile[]
 }
-model HostProfile {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String   @unique @db.ObjectId
-  user           User     @relation(fields: [userId], references: [id])
 
-  nin                String?  @unique
-  ninVerified        Boolean  @default(false)
-  verificationStatus String   @default("pending") // pending | verified | rejected
+model HostProfile {
+  // id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  id     Int  @id @default(autoincrement())
+  // userId         String   @unique @db.ObjectId
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  nin                String?   @unique
+  ninVerified        Boolean   @default(false)
+  verificationStatus String    @default("pending") // pending | verified | rejected
   verificationDate   DateTime?
   businessName       String?
   businessDocument   String?
-  createdAt          DateTime @default(now())
+  createdAt          DateTime  @default(now())
 }
 
 model Account {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String  @db.ObjectId
+  // id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  id Int @id @default(autoincrement())
+
+  // userId            String  @db.ObjectId
+  userId            Int
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.String
-  access_token      String? @db.String
+  // refresh_token     String? @db.String
+  // access_token      String? @db.String
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.String
+  // id_token          String? @db.String
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -74,7 +92,8 @@ model Account {
 }
 
 model Listing {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  // id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  id            Int      @id @default(autoincrement())
   title         String
   description   String
   imageSrc      String
@@ -84,41 +103,48 @@ model Listing {
   bathroomCount Int
   guestCount    Int
   locationValue String
-  userId        String   @db.ObjectId
+  // userId        String   @db.ObjectId
+  userId        Int
   price         Int
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Reservation {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  type         String // "stay" | "event" | "experience"
-  userId       String  @db.ObjectId
-  eventId      String? @db.ObjectId
-  stayId       String? @db.ObjectId
-  experienceId String? @db.ObjectId
+// model Reservation {
+//   // id           String  @id @default(auto()) @map("_id") @db.ObjectId
+//   id            Int   @id @default(autoincrement())
+//   type         String // "stay" | "event" | "experience"
+//   // userId       String  @db.ObjectId
+//   userId       Int   
+//   // eventId      String? @db.ObjectId
+//   // stayId       String? @db.ObjectId
+//   // experienceId String? @db.ObjectId
+//    eventId      Int? 
+//   stayId       Int? 
+//   experienceId Int? 
 
-  stay       Stay?       @relation(fields: [stayId], references: [id])
-  event      Event?      @relation(fields: [eventId], references: [id])
-  experience Experience? @relation(fields: [experienceId], references: [id])
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   stay       Stay?       @relation(fields: [stayId], references: [id])
+//   event      Event?      @relation(fields: [eventId], references: [id])
+//   experience Experience? @relation(fields: [experienceId], references: [id])
+//   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  note         String?
-  tickets      Int?
-  participants Int?
-  startDate    DateTime?
-  endDate      DateTime?
+//   note         String?
+//   tickets      Int?
+//   participants Int?
+//   startDate    DateTime?
+//   endDate      DateTime?
 
-  subtotal    Int?
-  serviceFee  Int?
-  totalPrice  Int
-  cleaningFee Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+//   subtotal    Int?
+//   serviceFee  Int?
+//   totalPrice  Int
+//   cleaningFee Int?
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+// }
 
 model Event {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  // id          String @id @default(auto()) @map("_id") @db.ObjectId
+  id          Int    @id @default(autoincrement())
   title       String
   description String
 
@@ -136,11 +162,12 @@ model Event {
   updatedAt   DateTime    @updatedAt
   favourites  Favourite[]
 
-  userId       String         @db.ObjectId
-  user         User           @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade)
-  reservations Reservation[]
-  reviews      Review[]
-  bookings     EventBooking[] @relation("EventBookings")
+  // userId       String         @db.ObjectId
+  userId   Int
+  user     User           @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade)
+  // reservations Reservation[]
+  reviews  Review[]
+  bookings EventBooking[] @relation("EventBookings")
 
   // relation to trip items
   tripItems TripItem[] @relation("EventTripItems")
@@ -157,7 +184,8 @@ enum WeekDay {
 }
 
 model Experience {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  // id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id            Int       @id @default(autoincrement())
   title         String
   description   String
   category      String
@@ -174,8 +202,8 @@ model Experience {
   updatedAt     DateTime  @updatedAt
 
   // relation to host (User)
-  host   User   @relation("UserExperiences", fields: [hostId], references: [id])
-  hostId String @db.ObjectId
+  host   User @relation("UserExperiences", fields: [hostId], references: [id])
+  hostId Int  @unique
 
   // opposite side of bookings
   bookings   ExperienceBooking[] @relation("ExperienceBookings")
@@ -185,11 +213,12 @@ model Experience {
   // relation to trip items
   tripItems TripItem[] @relation("ExperienceTripItems")
 
-  reservations Reservation[]
+  // reservations Reservation[]
 }
 
 model Stay {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  // id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  id              Int       @id @default(autoincrement())
   title           String
   description     String
   homeType        String
@@ -201,8 +230,9 @@ model Stay {
   updatedAt       DateTime? @updatedAt
 
   // relation to host (User)
-  host   User   @relation("UserStays", fields: [hostId], references: [id])
-  hostId String @db.ObjectId
+  host   User @relation("UserStays", fields: [hostId], references: [id])
+  // hostId String @db.ObjectId
+  hostId Int  @unique
 
   // relation to bookings
   bookings StayBooking[] @relation("StayBookings")
@@ -219,26 +249,30 @@ model Stay {
   address      Address?
   pricing      Pricing?
   availability Availability?
-  reservations Reservation[]
+  // reservations Reservation[]
 
   // publishing control
   isPublished Boolean @default(false)
 }
 
 model Capacity {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  // id       String @id @default(auto()) @map("_id") @db.ObjectId
+  id       Int @id @default(autoincrement())
   guests   Int
   bedrooms Int
   beds     Int
   baths    Int
 
   // relation to Stay (1:1)
-  stayId String @unique @db.ObjectId
-  stay   Stay   @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  // stayId String @unique @db.ObjectId
+  stayId Int @unique
+
+  stay Stay @relation(fields: [stayId], references: [id], onDelete: Cascade)
 }
 
 model Address {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  // id      String @id @default(auto()) @map("_id") @db.ObjectId
+  id      Int    @id @default(autoincrement())
   country String
   city    String
   line1   String
@@ -246,38 +280,45 @@ model Address {
   lng     Float?
 
   // relation to Stay (1:1)
-  stayId String @unique @db.ObjectId
-  stay   Stay   @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  // stayId String @unique @db.ObjectId
+  stayId Int  @unique
+  stay   Stay @relation(fields: [stayId], references: [id], onDelete: Cascade)
 }
 
 model Pricing {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  // id          String @id @default(auto()) @map("_id") @db.ObjectId
+  id          Int @id @default(autoincrement())
   basePrice   Int
   cleaningFee Int
   serviceFee  Int
 
   // relation to Stay (1:1)
-  stayId String @unique @db.ObjectId
-  stay   Stay   @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  // stayId String @unique @db.ObjectId
+  stayId Int  @unique
+  stay   Stay @relation(fields: [stayId], references: [id], onDelete: Cascade)
 }
 
 model Availability {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  // id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  id          Int        @id @default(autoincrement())
   unavailable DateTime[]
 
   // relation to Stay (1:1)
-  stayId String @unique @db.ObjectId
-  stay   Stay   @relation(fields: [stayId], references: [id], onDelete: Cascade)
+  // stayId String @unique @db.ObjectId
+  stayId Int  @unique
+  stay   Stay @relation(fields: [stayId], references: [id], onDelete: Cascade)
 }
 
 model StayBooking {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // id String @id @default(auto()) @map("_id") @db.ObjectId
+  id     Int  @id @default(autoincrement())
+  user   User @relation("UserStayBookings", fields: [userId], references: [id])
+  userId Int
 
-  user   User   @relation("UserStayBookings", fields: [userId], references: [id])
-  userId String @db.ObjectId
+  stay   Stay @relation("StayBookings", fields: [stayId], references: [id])
+  stayId Int
 
-  stay   Stay   @relation("StayBookings", fields: [stayId], references: [id])
-  stayId String @db.ObjectId
+  paymentStatus PaymentStatus @default(PENDING)
 
   checkIn  DateTime
   checkOut DateTime
@@ -288,90 +329,109 @@ model StayBooking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, stayId])
 }
 
 model EventBooking {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // id String @id @default(auto()) @map("_id") @db.ObjectId
+  id     Int  @id @default(autoincrement())
+  user   User @relation("UserEventBookings", fields: [userId], references: [id])
+  // userId String @db.ObjectId
+  userId Int
 
-  user   User   @relation("UserEventBookings", fields: [userId], references: [id])
-  userId String @db.ObjectId
+  event   Event @relation("EventBookings", fields: [eventId], references: [id])
+  eventId Int
 
-  event   Event  @relation("EventBookings", fields: [eventId], references: [id])
-  eventId String @db.ObjectId
+  paymentStatus PaymentStatus @default(PENDING)
 
   tickets  Int
   note     String?
-  total    Float
-  subtotal Float
-  service  Float
+  total    Int
+  subtotal Int
+  service  Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ExperienceBooking {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  // id String @id @default(auto()) @map("_id") @db.ObjectIds
+  id Int @id @default(autoincrement())
 
-  user   User   @relation("UserExperienceBookings", fields: [userId], references: [id])
-  userId String @db.ObjectId
+  user   User @relation("UserExperienceBookings", fields: [userId], references: [id])
+  userId Int
 
   experience   Experience @relation("ExperienceBookings", fields: [experienceId], references: [id])
-  experienceId String     @db.ObjectId
+  experienceId Int
 
-  date   DateTime
-  guests Int
-  note   String?
-  total  Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  date          DateTime
+  guests        Int
+  note          String?
+  subtotal      Int
+  service       Int
+  total         Int
+  paymentStatus PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Favourite {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
   // User who favourited
-  userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 1. REMOVE @unique from here
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Optional relations: can favourite a stay, event, or experience
-  stayId String? @db.ObjectId
-  stay   Stay?   @relation(fields: [stayId], references: [id])
+  // Optional relations
+  // 2. REMOVE @unique from these as well. 
+  // (Multiple users should be able to like the same stay!)
+  stayId Int?
+  stay   Stay? @relation(fields: [stayId], references: [id])
 
-  eventId String? @db.ObjectId
-  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId Int?
+  event   Event? @relation(fields: [eventId], references: [id])
 
-  experienceId String?     @db.ObjectId
+  experienceId Int?
   experience   Experience? @relation(fields: [experienceId], references: [id])
 
+  // 3. KEEP THESE
+  // These valid composite constraints prevent a user from liking 
+  // the exact same item twice, which is what you want.
   @@unique([userId, stayId])
   @@unique([userId, eventId])
   @@unique([userId, experienceId])
 }
 
 model Trip {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  // id          String    @id @default(auto()) @map("_id") @db.ObjectId,
+  id Int @id @default(autoincrement())
+
   startDate   DateTime?
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
- destination  String?
-  duration     Int?
-  budget       Int?
+  destination String?
+  duration    Int?
+  budget      Int?
   interests   String[]
   description String?
-  vibe         String?
-  itinerary    Json?
+  vibe        String?
+  itinerary   Json?
   // createdAt    DateTime @default(now())
-  userId String? @db.ObjectId
-  user   User?   @relation("UserTrips", fields: [userId], references: [id], onDelete: Cascade)
+  // userId Int? @unique 
+  userId      Int
+  user        User?     @relation("UserTrips", fields: [userId], references: [id], onDelete: Cascade)
 
   items TripItem[]
 }
 
 model TripItem {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  // id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  id Int @id @default(autoincrement())
+
   type              String // "stay" | "event" | "experience" | "custom"
   status            String    @default("planned") // "planned" | "booked"
   customTitle       String?
@@ -381,23 +441,24 @@ model TripItem {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  tripId String @db.ObjectId
-  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId Int
+  trip   Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   // Optional relations to listings
-  stayId String? @db.ObjectId
-  stay   Stay?   @relation("StayTripItems", fields: [stayId], references: [id])
+  stayId Int?
+  stay   Stay? @relation("StayTripItems", fields: [stayId], references: [id])
 
-  eventId String? @db.ObjectId
-  event   Event?  @relation("EventTripItems", fields: [eventId], references: [id])
+  eventId Int?
+  event   Event? @relation("EventTripItems", fields: [eventId], references: [id])
 
-  experienceId String?     @db.ObjectId
+  experienceId Int?
   experience   Experience? @relation("ExperienceTripItems", fields: [experienceId], references: [id])
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
+  // id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
   type      String
   title     String
   message   String
@@ -408,7 +469,9 @@ model Notification {
 }
 
 model Conversation {
-  id           String                    @id @default(auto()) @map("_id") @db.ObjectId
+  // id           String                    @id @default(auto()) @map("_id") @db.ObjectId
+  id Int @id @default(autoincrement())
+
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
   messages     Message[]
@@ -416,49 +479,108 @@ model Conversation {
 }
 
 model ConversationParticipant {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String       @db.ObjectId
-  conversationId String       @db.ObjectId
-  user           User         @relation(fields: [userId], references: [id])
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  id Int @id @default(autoincrement())
+
+  userId         Int
+  conversationId Int
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId]) // ✅ composite unique
+  @@index([userId])
+  @@index([conversationId])
 }
 
 model Message {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  conversationId String   @db.ObjectId
-  senderId       String   @db.ObjectId
+  id Int @id @default(autoincrement())
+
+  conversationId Int
+  senderId       Int
   text           String
-  time           DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   // relations
-  conversation Conversation @relation(fields: [conversationId], references: [id])
-  sender       User         @relation(fields: [senderId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
 }
 
 model Review {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  // id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id Int @id @default(autoincrement())
+
   user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.ObjectId
+  userId    Int      @unique
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
 
-  stayId String? @db.ObjectId
-  stay   Stay?   @relation(fields: [stayId], references: [id])
+  stayId Int?  @unique
+  stay   Stay? @relation(fields: [stayId], references: [id])
 
-  eventId String? @db.ObjectId
-  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId Int?   @unique
+  event   Event? @relation(fields: [eventId], references: [id])
 
-  experienceId String?     @db.ObjectId
+  experienceId Int?        @unique
   experience   Experience? @relation(fields: [experienceId], references: [id])
   reply        Reply?
   // reply Reply[]
 }
 
 model Reply {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  // id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id Int @id @default(autoincrement())
+
   message   String
   createdAt DateTime @default(now())
-  reviewId  String   @unique @db.ObjectId
+  reviewId  Int      @unique
   review    Review   @relation(fields: [reviewId], references: [id])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  FLUTTERWAVE
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  userId   Int
+  amount   Int // amount in kobo (Paystack standard)
+  currency String @default("NGN")
+
+  provider     PaymentProvider
+  providerRef  String?         @unique // reference from Paystack/Flutterwave
+  providerTxId String? // transaction id
+
+  status PaymentStatus @default(PENDING)
+
+  bookingType BookingType
+  bookingId   Int // stayBooking / eventBooking / experienceBooking id
+
+  metadata Json? // anything extra from provider
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([bookingType, bookingId])
+}
+
+enum BookingType {
+  STAY
+  EVENT
+  EXPERIENCE
 }

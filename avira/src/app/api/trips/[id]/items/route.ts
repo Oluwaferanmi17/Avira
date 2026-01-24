@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import { getServerSession } from "next-auth";
@@ -22,9 +23,14 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { id } = params;
+    const tripId = Number(params.id);
+
+    if (isNaN(tripId)) {
+      return NextResponse.json({ error: "Invalid trip ID" }, { status: 400 });
+    }
+
     const trip = await prisma.trip.findUnique({
-      where: { id },
+      where: { id: tripId },
       include: { user: true },
     });
 
@@ -84,7 +90,7 @@ export async function POST(
         customDate:
           type === "custom" ? (customDate ? new Date(customDate) : null) : null,
         customLocation: type === "custom" ? customLocation : null,
-        tripId: id,
+        tripId: tripId,
         stayId: type === "stay" ? stayId : null,
         eventId: type === "event" ? eventId : null,
         experienceId: type === "experience" ? experienceId : null,
@@ -130,7 +136,12 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { id } = params;
+    const tripId = Number(params.id);
+
+    if (isNaN(tripId)) {
+      return NextResponse.json({ error: "Invalid trip ID" }, { status: 400 });
+    }
+
     const body = await request.json();
     const { id: itemId } = body;
 
@@ -139,7 +150,7 @@ export async function DELETE(
       include: { trip: { include: { user: true } } },
     });
 
-    if (!item || item.trip.userId !== user.id || item.tripId !== id) {
+    if (!item || item.trip.userId !== user.id || item.tripId !== tripId) {
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 

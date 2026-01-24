@@ -77,7 +77,7 @@ export default async function getStay(
         pricing: true,
         availability: true,
         favourites: userId
-          ? { where: { userId } } // only check current user's favourites
+          ? { where: { userId: parseInt(userId) } } // only check current user's favourites
           : false,
       },
       orderBy: {

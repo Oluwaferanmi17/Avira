@@ -1,14 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prismadb";
+
+/* =========================
+   GET STAY BY ID
+========================= */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await params; // ✅ await params
+    const stayId = Number(id);
+
+    if (isNaN(stayId)) {
+      return NextResponse.json({ error: "Invalid stay ID" }, { status: 400 });
+    }
+
     const stay = await prisma.stay.findUnique({
-      where: { id },
+      where: { id: stayId },
       include: {
         capacity: true,
         address: true,
@@ -16,9 +26,11 @@ export async function GET(
         availability: true,
       },
     });
+
     if (!stay) {
       return NextResponse.json({ error: "Stay not found" }, { status: 404 });
     }
+
     return NextResponse.json(stay);
   } catch (error: any) {
     console.error("Error fetching stay:", error);
@@ -28,15 +40,26 @@ export async function GET(
     );
   }
 }
+
+/* =========================
+   DELETE STAY
+========================= */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const stayId = Number(id);
+
+    if (isNaN(stayId)) {
+      return NextResponse.json({ error: "Invalid stay ID" }, { status: 400 });
+    }
+
     await prisma.stay.delete({
-      where: { id },
+      where: { id: stayId },
     });
+
     return NextResponse.json({ message: "Stay deleted successfully" });
   } catch (error: any) {
     console.error("Error deleting stay:", error);
@@ -46,26 +69,33 @@ export async function DELETE(
     );
   }
 }
+
+/* =========================
+   UPDATE STAY
+========================= */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const stayId = Number(id);
     const data = await req.json();
 
-    // Make sure the stay exists
+    if (isNaN(stayId)) {
+      return NextResponse.json({ error: "Invalid stay ID" }, { status: 400 });
+    }
+
     const existingStay = await prisma.stay.findUnique({
-      where: { id },
+      where: { id: stayId },
     });
 
     if (!existingStay) {
       return NextResponse.json({ error: "Stay not found" }, { status: 404 });
     }
 
-    // Update the stay
     const updatedStay = await prisma.stay.update({
-      where: { id },
+      where: { id: stayId },
       data: {
         title: data.title,
         description: data.description,
