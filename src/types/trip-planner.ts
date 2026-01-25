@@ -8,13 +8,15 @@ export interface TripPreferences {
 }
 interface Activity {
   id?: string;
+  bookingId?: string; // ID of the real Stay, Event, or Experience
+  bookingType?: "stay" | "event" | "experience"; // The type of real data
   type:
-    | "breakfast"
-    | "morning"
-    | "lunch"
-    | "afternoon"
-    | "evening"
-    | "accommodation";
+  | "breakfast"
+  | "morning"
+  | "lunch"
+  | "afternoon"
+  | "evening"
+  | "accommodation";
   time?: string;
   title: string;
   description: string;
