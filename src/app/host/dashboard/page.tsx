@@ -8,6 +8,7 @@ import {
   FaEnvelope,
   FaChartBar,
   FaMoneyBillWave,
+  FaCompass,
 } from "react-icons/fa";
 import { LayoutDashboard } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -21,11 +22,13 @@ import Analytics from "@/app/components/dashboard/Analytics";
 import Payouts from "@/app/components/dashboard/Payouts";
 import Dashboard from "@/app/components/dashboard/Dashboard";
 import HostEvent from "@/app/components/dashboard/HostEvent";
+import HostExperience from "@/app/components/dashboard/HostExperience";
 
 const navItems = [
   { name: "Dashboard", icon: <LayoutDashboard /> },
   { name: "My Listings", icon: <FaHome /> },
   { name: "My Events", icon: <FaCalendarAlt /> },
+  { name: "My Experience", icon: <FaCompass /> },
   { name: "Bookings", icon: <FaBook /> },
   { name: "Messages", icon: <FaEnvelope /> },
   { name: "Reviews", icon: <FaStar /> },
@@ -73,6 +76,7 @@ export default function HostDashboard() {
           {activeTab === "Dashboard" && <Dashboard />}
           {activeTab === "My Listings" && <Listing />}
           {activeTab === "My Events" && <HostEvent />}
+          {activeTab === "My Experience" && <HostExperience />}
           {activeTab === "Bookings" && <Bookings />}
           {activeTab === "Messages" && <Messages />}
           {activeTab === "Reviews" && <Reviews />}

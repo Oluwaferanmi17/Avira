@@ -1,5 +1,5 @@
 import { Edit, Star, Trash, Plus, MapPin } from "lucide-react"; // Unified icons
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -24,7 +24,7 @@ const Listing = () => {
   const [isLoading, setIsLoading] = useState(true); // Added loading state
   const [showModal, setShowModal] = useState(false);
   const [selectedStay, setSelectedStay] = useState<Stay | null>(null);
-
+  const router = useRouter();
   // Form state
   const [forms, setForms] = useState({
     title: "",
