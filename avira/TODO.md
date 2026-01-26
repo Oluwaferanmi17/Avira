@@ -1,8 +1,0 @@
-- [ ] Add Trip and TripItem models to prisma/schema.prisma
-- [ ] Run prisma generate
-- [ ] Update src/app/api/trips/route.ts to fetch trips with items
-- [ ] Create new API route for creating trips: src/app/api/trips/route.ts POST
-- [ ] Create API route for adding items: src/app/api/trips/[id]/items/route.ts
-- [ ] Update src/app/Page/trips/page.tsx to display trips, create new trip, add custom items
-- [ ] Implement delete item functionality
-- [ ] Test the page
