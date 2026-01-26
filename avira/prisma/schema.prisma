@@ -310,8 +310,8 @@ model Availability {
 }
 
 model StayBooking {
-  // id String @id @default(auto()) @map("_id") @db.ObjectId
   id     Int  @id @default(autoincrement())
+
   user   User @relation("UserStayBookings", fields: [userId], references: [id])
   userId Int
 
@@ -330,7 +330,8 @@ model StayBooking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, stayId])
+  @@index([stayId])
+  @@index([userId])
 }
 
 model EventBooking {

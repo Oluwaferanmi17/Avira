@@ -69,23 +69,27 @@ export async function POST(req: Request) {
     
     STAYS (category: "stay"):
     ${stays
-        .map(
-          (s) =>
-            `- ${s.title} (Price: ₦${s.pricing?.basePrice || "Check Price"}, ID: ${s.id})`,
-        )
-        .join("\n")}
+      .map(
+        (s) =>
+          `- ${s.title} (Price: ₦${s.pricing?.basePrice || "Check Price"}, ID: ${s.id})`,
+      )
+      .join("\n")}
 
     EVENTS (category: "event"):
     ${events
-        .map(
-          (e) => `- ${e.title} (Price: ₦${e.ticketPrice || "Check Price"}, ID: ${e.id})`,
-        )
-        .join("\n")}
+      .map(
+        (e) =>
+          `- ${e.title} (Price: ₦${e.ticketPrice || "Check Price"}, ID: ${e.id})`,
+      )
+      .join("\n")}
 
     EXPERIENCES (category: "experience"):
     ${experiences
-        .map((e) => `- ${e.title} (Price: ₦${e.price || "Check Price"}, ID: ${e.id})`)
-        .join("\n")}
+      .map(
+        (e) =>
+          `- ${e.title} (Price: ₦${e.price || "Check Price"}, ID: ${e.id})`,
+      )
+      .join("\n")}
 
     INSTRUCTIONS:
     1. Return ONLY valid JSON.
@@ -126,7 +130,7 @@ export async function POST(req: Request) {
     // 4. Call Gemini with JSON Mode
     // 🤖 Generate itinerary
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash", // Using a more modern model name if possible, or sticking to provided one
+      model: "gemini-2.5-flash", // Using a more modern model name if possible, or sticking to provided one
       generationConfig: {
         responseMimeType: "application/json",
       },
