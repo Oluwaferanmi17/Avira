@@ -1,5 +1,5 @@
 import { Calendar, MapPin, Plus, Edit, Trash, Users } from "lucide-react";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -23,7 +23,7 @@ interface EventData {
 const MyEvents = () => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const router = useRouter();
   // Modal & Form State
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);

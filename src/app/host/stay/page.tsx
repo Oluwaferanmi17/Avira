@@ -34,8 +34,8 @@ function ProgressStep({ active, done }: { active: boolean; done?: boolean }) {
   const cls = active
     ? "bg-emerald-600"
     : done
-    ? "bg-emerald-300"
-    : "bg-slate-300";
+      ? "bg-emerald-300"
+      : "bg-slate-300";
   return <div className={`${base} ${cls}`} />;
 }
 function StepHeader({ title, desc }: { title: string; desc?: string }) {
@@ -82,7 +82,7 @@ export default function CreateStayPage() {
   const draft = useHostCreateStore((s) => s.draft);
   const setPricing = useHostCreateStore((s) => s.setPricing);
   const unavailable = useHostCreateStore(
-    (s) => s.draft.availability.unavailable
+    (s) => s.draft.availability.unavailable,
   );
   const setAvailability = useHostCreateStore((s) => s.setAvailability);
   const [step, setStep] = useState<StepKey>("basic");
@@ -284,7 +284,7 @@ export default function CreateStayPage() {
                             setCapacity({
                               bedrooms: Math.max(
                                 0,
-                                Number(e.target.value || 0)
+                                Number(e.target.value || 0),
                               ),
                             })
                           }

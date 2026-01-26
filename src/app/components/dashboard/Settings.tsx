@@ -1,48 +1,135 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Bell,
-  Building2,
-  Clock,
+  // Building2,
+  // Clock,
   CreditCard,
-  DollarSign,
-  Globe,
-  Mail,
-  MapPin,
-  Phone,
-  User,
+  // DollarSign,
+  // Globe,
+  // Mail,
+  // MapPin,
+  // Phone,
+  // User,
+  Save,
+  // Check,
+  // Plus,
+  // Trash2,
 } from "lucide-react";
 import { useState } from "react";
 
-const Settings = () => {
-  const [defaultPrice, setDefaultPrice] = useState("85");
-  const [currency, setCurrency] = useState("USD ($)");
-  const [cancellationPolicy, setCancellationPolicy] = useState("Moderate");
-  const [checkIn, setCheckIn] = useState("14:00");
-  const [checkOut, setCheckOut] = useState("11:00");
-  const [instantBooking, setInstantBooking] = useState(true);
-  const [minNights, setMinNights] = useState("1");
-  const [maxNights, setMaxNights] = useState("30");
-  const [houseRules, setHouseRules] = useState([
-    "No smoking",
-    "No parties",
-    "Pets allowed with approval",
-  ]);
-  const [newRule, setNewRule] = useState("");
-  const addRule = () => {
-    if (newRule.trim()) {
-      setHouseRules([...houseRules, newRule.trim()]);
-      setNewRule("");
-    }
-  };
+// --- Types ---
+type ProfileData = {
+  businessName: string;
+  description: string;
+  phone: string;
+  email: string;
+  address: string;
+  website: string;
+};
 
-  const removeRule = (rule: string) => {
-    setHouseRules(houseRules.filter((r) => r !== rule));
-  };
-  const [payoutMethod, setPayoutMethod] = useState("Bank Transfer");
-  const [payoutSchedule, setPayoutSchedule] = useState("Weekly");
-  const [bankName, setBankName] = useState("First Bank Nigeria");
-  const [accountNumber, setAccountNumber] = useState("****1234");
-  const [taxId, setTaxId] = useState("");
-  const [notifications, setNotifications] = useState({
+type ListingData = {
+  defaultPrice: string;
+  currency: string;
+  cancellationPolicy: string;
+  checkIn: string;
+  checkOut: string;
+  instantBooking: boolean;
+  minNights: string;
+  maxNights: string;
+  houseRules: string[];
+};
+
+type PaymentData = {
+  method: string;
+  schedule: string;
+  bankName: string;
+  accountNumber: string;
+  taxId: string;
+};
+
+type NotificationsData = {
+  bookingRequests: boolean;
+  guestMessages: boolean;
+  newReviews: boolean;
+  payoutUpdates: boolean;
+  maintenanceAlerts: boolean;
+  marketingTips: boolean;
+};
+
+// --- Sub-Components ---
+
+const SectionCard = ({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: any;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
+      <div className="p-2 bg-emerald-100 rounded-lg">
+        <Icon className="w-5 h-5 text-emerald-600" />
+      </div>
+      <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+    </div>
+    <div className="p-6">{children}</div>
+  </div>
+);
+
+const InputGroup = ({
+  label,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  icon?: any;
+  children: React.ReactNode;
+}) => (
+  <div>
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+      {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+      {label}
+    </label>
+    {children}
+  </div>
+);
+
+// --- Main Settings Component ---
+
+const Settings = () => {
+  // 1. Grouped State Management
+  const [profile, setProfile] = useState<ProfileData>({
+    businessName: "",
+    description: "",
+    phone: "",
+    email: "",
+    address: "",
+    website: "",
+  });
+
+  const [listing, setListing] = useState<ListingData>({
+    defaultPrice: "85",
+    currency: "USD ($)",
+    cancellationPolicy: "Moderate",
+    checkIn: "14:00",
+    checkOut: "11:00",
+    instantBooking: true,
+    minNights: "1",
+    maxNights: "30",
+    houseRules: ["No smoking", "No parties", "Pets allowed with approval"],
+  });
+
+  const [payment, setPayment] = useState<PaymentData>({
+    method: "Bank Transfer",
+    schedule: "Weekly",
+    bankName: "First Bank Nigeria",
+    accountNumber: "****1234",
+    taxId: "",
+  });
+
+  const [notifications, setNotifications] = useState<NotificationsData>({
     bookingRequests: true,
     guestMessages: true,
     newReviews: true,
@@ -50,436 +137,419 @@ const Settings = () => {
     maintenanceAlerts: true,
     marketingTips: false,
   });
-  const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+
+  const [newRule, setNewRule] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Handlers
+  // const handleProfileChange = (field: keyof ProfileData, value: string) => {
+  //   setProfile((prev) => ({ ...prev, [field]: value }));
+  // };
+
+  // const handleListingChange = (
+  //   field: keyof ListingData,
+  //   value: string | boolean | string[],
+  // ) => {
+  //   setListing((prev) => ({ ...prev, [field]: value }));
+  // };
+
+  const handlePaymentChange = (field: keyof PaymentData, value: string) => {
+    setPayment((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    console.log("Saved settings:", notifications);
-    alert("Host settings saved successfully!");
+  const toggleNotification = (key: keyof NotificationsData) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // const addRule = () => {
+  //   if (newRule.trim()) {
+  //     handleListingChange("houseRules", [
+  //       ...listing.houseRules,
+  //       newRule.trim(),
+  //     ]);
+  //     setNewRule("");
+  //   }
+  // };
+
+  // const removeRule = (ruleToRemove: string) => {
+  //   handleListingChange(
+  //     "houseRules",
+  //     listing.houseRules.filter((r) => r !== ruleToRemove),
+  //   );
+  // };
+
+  const handleSaveAll = () => {
+    setIsSaving(true);
+    // Simulate API call
+    setTimeout(() => {
+      console.log("Full Save Payload:", {
+        profile,
+        listing,
+        payment,
+        notifications,
+      });
+      setIsSaving(false);
+      alert("All settings saved successfully!");
+    }, 800);
+  };
+
+  const inputClass =
+    "w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all";
+
   return (
-    <div>
-      <section>
-        <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-6">
-            <User className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-semibold text-gray-800">
-              Host Profile
-            </h2>
-          </div>
+    <div className="min-h-screen bg-gray-50/50 pb-24">
+      <div className="max-w-3xl mx-auto space-y-8 pt-8 px-4">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Host Settings</h1>
+          <p className="text-gray-500">
+            Manage your profile, listing preferences, and payouts.
+          </p>
+        </div>
 
-          <form className="space-y-6">
-            {/* Business Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Name
-              </label>
+        {/* 1. Host Profile Section */}
+        {/* <SectionCard icon={User} title="Host Profile">
+          <div className="space-y-5">
+            <InputGroup label="Business Name">
               <input
                 type="text"
+                value={profile.businessName}
+                onChange={(e) =>
+                  handleProfileChange("businessName", e.target.value)
+                }
                 placeholder="Sunrise Stays"
-                className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                className={inputClass}
               />
-            </div>
+            </InputGroup>
 
-            {/* Business Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Description
-              </label>
+            <InputGroup label="Business Description">
               <textarea
                 rows={3}
-                placeholder="Providing comfortable and authentic accommodations across Africa"
-                className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
-              ></textarea>
-            </div>
+                value={profile.description}
+                onChange={(e) =>
+                  handleProfileChange("description", e.target.value)
+                }
+                placeholder="Describe your hosting business..."
+                className={inputClass}
+              />
+            </InputGroup>
 
-            {/* Phone + Email */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <Phone className="w-4 h-4 text-gray-500" />
-                  Business Phone
-                </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <InputGroup label="Business Phone" icon={Phone}>
                 <input
                   type="text"
+                  value={profile.phone}
+                  onChange={(e) => handleProfileChange("phone", e.target.value)}
                   placeholder="+234 800 123 4567"
-                  className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  className={inputClass}
                 />
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                  <Mail className="w-4 h-4 text-gray-500" />
-                  Business Email
-                </label>
+              </InputGroup>
+              <InputGroup label="Business Email" icon={Mail}>
                 <input
                   type="email"
+                  value={profile.email}
+                  onChange={(e) => handleProfileChange("email", e.target.value)}
                   placeholder="host@sunrisestays.com"
-                  className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  className={inputClass}
                 />
-              </div>
+              </InputGroup>
             </div>
 
-            {/* Business Address */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <MapPin className="w-4 h-4 text-gray-500" />
-                Business Address
-              </label>
+            <InputGroup label="Business Address" icon={MapPin}>
               <input
                 type="text"
-                placeholder="123 Business Avenue, Victoria Island, Lagos, Nigeria"
-                className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                value={profile.address}
+                onChange={(e) => handleProfileChange("address", e.target.value)}
+                className={inputClass}
               />
-            </div>
+            </InputGroup>
 
-            {/* Website (Optional) */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                <Globe className="w-4 h-4 text-gray-500" />
-                Website (Optional)
-              </label>
+            <InputGroup label="Website (Optional)" icon={Globe}>
               <input
                 type="url"
-                placeholder="www.sunrisestays.com"
-                className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                value={profile.website}
+                onChange={(e) => handleProfileChange("website", e.target.value)}
+                className={inputClass}
               />
-            </div>
-
-            {/* Submit Button */}
-            {/* <div className="pt-4">
-                      <button
-                        type="submit"
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition-all duration-300"
-                      >
-                        Save Profile
-                      </button>
-                    </div> */}
-          </form>
-        </div>
-        <div className="bg-white shadow border border-gray-200 rounded-xl p-6 max-w-3xl mx-auto">
-          <h2 className="flex items-center text-lg font-semibold mb-4">
-            <Building2 className="w-5 h-5 mr-2 text-emerald-600" />
-            Listing Preferences
-          </h2>
-
-          {/* Price, Currency, Policy */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Default Price
-              </label>
-              <div className="relative mt-1">
-                <DollarSign className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-                <input
-                  type="number"
-                  className="pl-7 w-full border rounded-md py-2 px-3 text-gray-800 focus:ring-2 focus:ring-emerald-400"
-                  value={defaultPrice}
-                  onChange={(e) => setDefaultPrice(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Currency
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              >
-                <option>USD ($)</option>
-                <option>NGN (₦)</option>
-                <option>EUR (€)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Cancellation Policy
-              </label>
-              <select
-                value={cancellationPolicy}
-                onChange={(e) => setCancellationPolicy(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              >
-                <option>Flexible</option>
-                <option>Moderate</option>
-                <option>Strict</option>
-              </select>
-            </div>
+            </InputGroup>
           </div>
+        </SectionCard> */}
 
-          <hr className="my-6 border-gray-200" />
+        {/* 2. Listing Preferences Section */}
+        {/* <SectionCard icon={Building2} title="Listing Preferences">
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-5">
+              <InputGroup label="Default Price">
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    value={listing.defaultPrice}
+                    onChange={(e) =>
+                      handleListingChange("defaultPrice", e.target.value)
+                    }
+                    className={`${inputClass} pl-9`}
+                  />
+                </div>
+              </InputGroup>
 
-          {/* Check-in / Check-out */}
-          <div className="grid md:grid-cols-3 gap-4 items-end">
-            <div>
-              <label className="text-sm font-medium text-gray-600 flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-gray-500" /> Check-in Time
-              </label>
-              <input
-                type="time"
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600 flex items-center">
-                <Clock className="w-4 h-4 mr-1 text-gray-500" /> Check-out Time
-              </label>
-              <input
-                type="time"
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 mt-6">
-              <label className="text-sm font-medium text-gray-600">
-                Instant Booking
-              </label>
-              <button
-                onClick={() => setInstantBooking(!instantBooking)}
-                className={`w-10 h-5 flex items-center rounded-full transition-colors ${
-                  instantBooking ? "bg-emerald-500" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`w-4 h-4 bg-white rounded-full shadow transform transition-transform ${
-                    instantBooking ? "translate-x-5" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          {/* Nights */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Minimum Nights
-              </label>
-              <input
-                type="number"
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-                value={minNights}
-                onChange={(e) => setMinNights(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Maximum Nights
-              </label>
-              <input
-                type="number"
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-                value={maxNights}
-                onChange={(e) => setMaxNights(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          {/* House Rules */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">
-              House Rules
-            </h3>
-            <div className="space-y-2">
-              {houseRules.map((rule, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border rounded-md py-2 px-3"
+              <InputGroup label="Currency">
+                <select
+                  value={listing.currency}
+                  onChange={(e) =>
+                    handleListingChange("currency", e.target.value)
+                  }
+                  className={inputClass}
                 >
-                  <span>{rule}</span>
-                  <button
-                    onClick={() => removeRule(rule)}
-                    className="text-sm text-red-500 hover:text-red-600"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+                  <option>USD ($)</option>
+                  <option>NGN (₦)</option>
+                  <option>EUR (€)</option>
+                </select>
+              </InputGroup>
+
+              <InputGroup label="Cancellation Policy">
+                <select
+                  value={listing.cancellationPolicy}
+                  onChange={(e) =>
+                    handleListingChange("cancellationPolicy", e.target.value)
+                  }
+                  className={inputClass}
+                >
+                  <option>Flexible</option>
+                  <option>Moderate</option>
+                  <option>Strict</option>
+                </select>
+              </InputGroup>
             </div>
 
-            <div className="flex mt-3 space-x-2">
-              <input
-                type="text"
-                placeholder="Add a new house rule..."
-                className="flex-1 border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-                value={newRule}
-                onChange={(e) => setNewRule(e.target.value)}
-              />
-              <button
-                onClick={addRule}
-                className="bg-emerald-500 text-white px-4 py-2 rounded-md hover:bg-emerald-600"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white shadow border border-gray-200 rounded-xl p-6 max-w-3xl mx-auto">
-          {/* Title */}
-          <h2 className="flex items-center text-lg font-semibold mb-4">
-            <CreditCard className="w-5 h-5 mr-2 text-emerald-600" />
-            Payment & Payout
-          </h2>
+            <div className="grid md:grid-cols-3 gap-5">
+              <InputGroup label="Check-in Time" icon={Clock}>
+                <input
+                  type="time"
+                  value={listing.checkIn}
+                  onChange={(e) =>
+                    handleListingChange("checkIn", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
+              <InputGroup label="Check-out Time" icon={Clock}>
+                <input
+                  type="time"
+                  value={listing.checkOut}
+                  onChange={(e) =>
+                    handleListingChange("checkOut", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
 
-          {/* Payout Method & Schedule */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Payout Method
-              </label>
-              <select
-                value={payoutMethod}
-                onChange={(e) => setPayoutMethod(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              >
-                <option>Bank Transfer</option>
-                <option>PayPal</option>
-                <option>Crypto Wallet</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Payout Schedule
-              </label>
-              <select
-                value={payoutSchedule}
-                onChange={(e) => setPayoutSchedule(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              >
-                <option>Daily</option>
-                <option>Weekly</option>
-                <option>Monthly</option>
-              </select>
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          {/* Bank Details */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Account Number
-              </label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-              />
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          {/* Tax ID */}
-          <div>
-            <label className="text-sm font-medium text-gray-600">
-              Tax ID (Optional)
-            </label>
-            <input
-              type="text"
-              value={taxId}
-              onChange={(e) => setTaxId(e.target.value)}
-              placeholder="For tax reporting purposes"
-              className="mt-1 w-full border rounded-md py-2 px-3 focus:ring-2 focus:ring-emerald-400"
-            />
-          </div>
-        </div>
-        <div className="bg-white shadow border border-gray-200 rounded-xl p-6 max-w-3xl mx-auto">
-          {/* Header */}
-          <h2 className="flex items-center text-lg font-semibold mb-4">
-            <Bell className="w-5 h-5 mr-2 text-emerald-600" />
-            Host Notifications
-          </h2>
-
-          {/* Notification List */}
-          <div className="space-y-5">
-            {[
-              {
-                key: "bookingRequests",
-                title: "Booking Requests",
-                desc: "Get notified when guests request to book",
-              },
-              {
-                key: "guestMessages",
-                title: "Guest Messages",
-                desc: "Receive alerts for new guest messages",
-              },
-              {
-                key: "newReviews",
-                title: "New Reviews",
-                desc: "Be notified when you receive new reviews",
-              },
-              {
-                key: "payoutUpdates",
-                title: "Payout Updates",
-                desc: "Get updates about your payouts and earnings",
-              },
-              {
-                key: "maintenanceAlerts",
-                title: "Maintenance Alerts",
-                desc: "Receive maintenance and system alerts",
-              },
-              {
-                key: "marketingTips",
-                title: "Marketing Tips",
-                desc: "Get hosting tips and marketing suggestions",
-              },
-            ].map(({ key, title, desc }) => (
-              <div
-                key={key}
-                className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
-              >
-                <div>
-                  <p className="font-medium text-gray-800">{title}</p>
-                  <p className="text-sm text-gray-500">{desc}</p>
-                </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-sm font-medium text-gray-700 mb-2">
+                  Instant Booking
+                </label>
                 <button
                   onClick={() =>
-                    toggleNotification(key as keyof typeof notifications)
+                    handleListingChange(
+                      "instantBooking",
+                      !listing.instantBooking,
+                    )
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    notifications[key as keyof typeof notifications]
-                      ? "bg-emerald-500"
-                      : "bg-gray-300"
+                  className={`w-12 h-6 flex items-center rounded-full transition-colors duration-300 ${
+                    listing.instantBooking ? "bg-emerald-500" : "bg-gray-200"
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                      notifications[key as keyof typeof notifications]
+                    className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ${
+                      listing.instantBooking
+                        ? "translate-x-6"
+                        : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-5">
+              <InputGroup label="Min Nights">
+                <input
+                  type="number"
+                  value={listing.minNights}
+                  onChange={(e) =>
+                    handleListingChange("minNights", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
+              <InputGroup label="Max Nights">
+                <input
+                  type="number"
+                  value={listing.maxNights}
+                  onChange={(e) =>
+                    handleListingChange("maxNights", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                House Rules
+              </h3>
+              <div className="space-y-2 mb-3">
+                {listing.houseRules.map((rule, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-white border border-gray-200 rounded-lg py-2 px-3 text-sm"
+                  >
+                    <span className="text-gray-700">{rule}</span>
+                    <button
+                      onClick={() => removeRule(rule)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Add a rule..."
+                  className={inputClass}
+                  value={newRule}
+                  onChange={(e) => setNewRule(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addRule()}
+                />
+                <button
+                  onClick={addRule}
+                  className="bg-emerald-600 text-white px-4 rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </SectionCard> */}
+
+        {/* 3. Payment Section */}
+        <SectionCard icon={CreditCard} title="Payment & Payout">
+          <div className="space-y-5">
+            <div className="grid md:grid-cols-2 gap-5">
+              <InputGroup label="Payout Method">
+                <select
+                  value={payment.method}
+                  onChange={(e) =>
+                    handlePaymentChange("method", e.target.value)
+                  }
+                  className={inputClass}
+                >
+                  <option>Bank Transfer</option>
+                  <option>PayPal</option>
+                  <option>Crypto Wallet</option>
+                </select>
+              </InputGroup>
+              <InputGroup label="Payout Schedule">
+                <select
+                  value={payment.schedule}
+                  onChange={(e) =>
+                    handlePaymentChange("schedule", e.target.value)
+                  }
+                  className={inputClass}
+                >
+                  <option>Daily</option>
+                  <option>Weekly</option>
+                  <option>Monthly</option>
+                </select>
+              </InputGroup>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-5">
+              <InputGroup label="Bank Name">
+                <input
+                  type="text"
+                  value={payment.bankName}
+                  onChange={(e) =>
+                    handlePaymentChange("bankName", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
+              <InputGroup label="Account Number">
+                <input
+                  type="text"
+                  value={payment.accountNumber}
+                  onChange={(e) =>
+                    handlePaymentChange("accountNumber", e.target.value)
+                  }
+                  className={inputClass}
+                />
+              </InputGroup>
+            </div>
+
+            <InputGroup label="Tax ID (Optional)">
+              <input
+                type="text"
+                value={payment.taxId}
+                onChange={(e) => handlePaymentChange("taxId", e.target.value)}
+                placeholder="Tax reporting ID"
+                className={inputClass}
+              />
+            </InputGroup>
+          </div>
+        </SectionCard>
+
+        {/* 4. Notifications Section */}
+        <SectionCard icon={Bell} title="Notifications">
+          <div className="divide-y divide-gray-100">
+            {Object.entries({
+              bookingRequests: {
+                title: "Booking Requests",
+                desc: "Alerts for new bookings",
+              },
+              guestMessages: {
+                title: "Guest Messages",
+                desc: "New messages from guests",
+              },
+              newReviews: {
+                title: "New Reviews",
+                desc: "When a guest leaves a review",
+              },
+              payoutUpdates: {
+                title: "Payout Updates",
+                desc: "Funds transferred alerts",
+              },
+              maintenanceAlerts: {
+                title: "System Alerts",
+                desc: "Maintenance & warnings",
+              },
+              marketingTips: {
+                title: "Marketing Tips",
+                desc: "Promotional insights",
+              },
+            }).map(([key, info]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
+              >
+                <div>
+                  <p className="font-medium text-gray-800">{info.title}</p>
+                  <p className="text-sm text-gray-500">{info.desc}</p>
+                </div>
+                <button
+                  onClick={() =>
+                    toggleNotification(key as keyof NotificationsData)
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                    notifications[key as keyof NotificationsData]
+                      ? "bg-emerald-500"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                      notifications[key as keyof NotificationsData]
                         ? "translate-x-6"
                         : "translate-x-1"
                     }`}
@@ -488,18 +558,39 @@ const Settings = () => {
               </div>
             ))}
           </div>
+        </SectionCard>
+      </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end mt-6">
+      {/* Floating Save Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <span className="text-sm text-gray-500 hidden sm:block">
+            Last saved: Just now
+          </span>
+          <div className="flex gap-3 w-full sm:w-auto">
             <button
-              onClick={handleSave}
-              className="bg-emerald-600 text-white font-medium px-4 py-2 rounded-md hover:bg-emerald-700"
+              className="flex-1 sm:flex-none px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => window.location.reload()} // Mock cancel
             >
-              Save Host Settings
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveAll}
+              disabled={isSaving}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+            >
+              {isSaving ? (
+                "Saving..."
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
