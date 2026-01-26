@@ -7,17 +7,23 @@ export async function POST(req: Request) {
     const {
       bookingType,
       bookingId,
-      amount, // already in kobo
+      amount, // already in kobo from frontend
+      email,
+      userId,
     } = body;
+
+    if (!email || !amount || !bookingId || !bookingType || !userId) {
+      return new NextResponse("Missing required fields", { status: 400 });
+    }
 
     // 1. Create payment record
     const payment = await prisma.payment.create({
       data: {
-        userId: body.userId,
+        userId: Number(userId),
         amount,
         provider: "PAYSTACK",
         bookingType,
-        bookingId,
+        bookingId: Number(bookingId),
       },
     });
 
@@ -29,7 +35,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: body.email,
+        email,
         amount,
         reference: `PAY_${payment.id}`,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
@@ -43,6 +49,11 @@ export async function POST(req: Request) {
 
     const data = await res.json();
 
+    if (!data.status) {
+      console.error("Paystack init error:", data.message);
+      return new NextResponse(data.message || "Paystack initialization failed", { status: 400 });
+    }
+
     // 3. Save provider reference
     await prisma.payment.update({
       where: { id: payment.id },
@@ -53,7 +64,7 @@ export async function POST(req: Request) {
       authorizationUrl: data.data.authorization_url,
     });
   } catch (err) {
-    console.error(err);
-    return new NextResponse("Payment init failed", { status: 500 });
+    console.error("Payment init error:", err);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

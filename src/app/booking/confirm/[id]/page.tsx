@@ -77,37 +77,50 @@ export default function BookingConfirm() {
     return `AVR-${ts}-${rnd}`;
   }
 
-  // const payNow = async () => {
-  //   setIsProcessing(true);
-  //   setError("");
+  const payNow = async () => {
+    setIsProcessing(true);
+    setError("");
 
-  //   try {
-  //     const res = await fetch("/api/payments/init", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({
-  //         bookingType: booking.type.toUpperCase(), // STAY | EVENT | EXPERIENCE
-  //         bookingId: booking.dbId, // DB booking id
-  //         amount: booking.cost.total * 100, // kobo
-  //         email, // from local state
-  //       }),
-  //     });
+    try {
+      // Ensure we have a valid userId. If not in booking store, we might need to fetch it from session.
+      // Based on schema, userId is required for Payment record.
+      const userId = booking.userId || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
 
-  //     if (!res.ok) {
-  //       throw new Error("Failed to initialize payment");
-  //     }
+      if (!userId) {
+        throw new Error("User session not found. Please log in again.");
+      }
 
-  //     const data = await res.json();
+      const res = await fetch("/api/payment/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingType: booking.type.toUpperCase(), // STAY | EVENT | EXPERIENCE
+          bookingId: booking.dbId, // DB booking id
+          amount: Math.round(booking.cost.total * 100), // convert to kobo and ensure integer
+          email: email, // from local state
+          userId: userId,
+        }),
+      });
 
-  //     // 🔥 Redirect to Paystack
-  //     window.location.href = data.authorizationUrl;
-  //   } catch (err) {
-  //     setError(
-  //       err instanceof Error ? err.message : "Payment initialization failed",
-  //     );
-  //     setIsProcessing(false);
-  //   }
-  // };
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to initialize payment");
+      }
+
+      // 🔥 Redirect to Paystack
+      if (data.authorizationUrl) {
+        window.location.href = data.authorizationUrl;
+      } else {
+        throw new Error("No authorization URL received from payment provider");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Payment initialization failed",
+      );
+      setIsProcessing(false);
+    }
+  };
 
   const handleConfirm = async () => {
     setError("");
@@ -118,40 +131,9 @@ export default function BookingConfirm() {
       return;
     }
 
-    setIsProcessing(true);
-
-    // Simulate a small delay for UX (optional, remove if not needed)
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const reservationId = generateReservationId();
-
-    // 3. Update Store with Contact Info
-    // setBooking({
-    //   ...booking,
-    //   reservationId,
-    //   createdAt: new Date().toISOString(),
-    //   contact: {
-    //     fullName,
-    //     email,
-    //     phone,
-    //   },
-    // });
-
-    router.push(`/booking/success/${encodeURIComponent(reservationId)}`);
+    // 👉 PAYMENT STARTS HERE
+    await payNow();
   };
-
-  // const handleConfirm = async () => {
-  //   setError("");
-
-  //   // Validation
-  //   if (!fullName.trim() || !email.trim() || !phone.trim()) {
-  //     setError("Please fill in all contact details to proceed.");
-  //     return;
-  //   }
-
-  //   // 👉 PAYMENT STARTS HERE
-  //   await payNow();
-  // };
 
   const handleDelete = async () => {
     // 4. Safe Delete Confirmation
