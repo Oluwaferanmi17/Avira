@@ -6,12 +6,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 1. Destructure and convert types safely
-    // Even if they come as strings ("63"), this forces them to numbers (63)
     const userId = parseInt(body.userId);
     const stayId = parseInt(body.stayId);
-
     const { checkIn, checkOut, guests, note } = body;
+
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
 
     // find stay and pricing
     const stay = await prisma.stay.findUnique({
@@ -22,98 +22,69 @@ export async function POST(req: Request) {
     if (!stay || !stay.pricing) {
       return NextResponse.json(
         { error: "Stay not found or not bookable" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // calculate number of nights
+    // calculate nights
     const nights =
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-      (1000 * 60 * 60 * 24);
+      (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
 
     if (nights <= 0) {
       return NextResponse.json({ error: "Invalid dates" }, { status: 400 });
     }
 
-    // calculate total price
+    // calculate total
     const total =
       nights * stay.pricing.basePrice +
       stay.pricing.cleaningFee +
       stay.pricing.serviceFee;
 
-    // create booking
-    const booking = await prisma.stayBooking.create({
-      data: {
-        userId, // ✅ Now strictly a Number
-        stayId, // ✅ Now strictly a Number
-        checkIn: new Date(checkIn),
-        checkOut: new Date(checkOut),
-        nights,
-        guests: parseInt(guests), // Good practice to ensure this is an int too
-        note,
-        total,
-      },
+    // ✅ TRANSACTION (prevents race conditions)
+    const booking = await prisma.$transaction(async (tx) => {
+      // 🔒 1. Check for overlapping bookings
+      const conflict = await tx.stayBooking.findFirst({
+        where: {
+          stayId,
+          AND: [
+            { checkIn: { lt: checkOutDate } },
+            { checkOut: { gt: checkInDate } },
+          ],
+        },
+      });
+
+      if (conflict) {
+        throw new Error("DOUBLE_BOOKING");
+      }
+
+      // ✅ 2. Create booking only if safe
+      return await tx.stayBooking.create({
+        data: {
+          userId,
+          stayId,
+          checkIn: checkInDate,
+          checkOut: checkOutDate,
+          nights,
+          guests: parseInt(guests),
+          note,
+          total,
+        },
+      });
     });
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error: any) {
+    if (error.message === "DOUBLE_BOOKING") {
+      return NextResponse.json(
+        { error: "This stay is already booked for the selected dates" },
+        { status: 409 },
+      );
+    }
+
     console.error("Error creating booking:", error);
     return NextResponse.json(
       { error: "Failed to create booking", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userIdParam = searchParams.get("userId");
-
-    const query: any = {
-      include: {
-        stay: { include: { pricing: true, address: true } },
-      },
-    };
-
-    // Fix for GET as well: Ensure userId matches the type in DB (Int)
-    if (userIdParam) {
-      query.where = { userId: parseInt(userIdParam) };
-    }
-
-    const bookings = await prisma.stayBooking.findMany(query);
-
-    return NextResponse.json(bookings);
-  } catch (error: any) {
-    console.error("Error fetching bookings:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch bookings", details: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// export async function DELETE(
-//   req: Request,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const { id } = params;
-
-//     if (!id) {
-//       return NextResponse.json(
-//         { error: "Missing stayBooking id" },
-//         { status: 400 }
-//       );
-//     }
-
-//     await prisma.stayBooking.delete({
-//       where: { id },
-//     });
-
-//     return NextResponse.json({ success: true });
-//   } catch (err: any) {
-//     console.error("Error deleting StayBooking:", err);
-//     return NextResponse.json({ error: err.message }, { status: 500 });
-//   }
-// }

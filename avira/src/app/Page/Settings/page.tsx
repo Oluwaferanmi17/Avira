@@ -4,14 +4,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import {
-  User,
-  Mail,
-  Phone,
+  // User,
+  // Mail,
+  // Phone,
   Lock,
   Bell,
   CreditCard,
   Shield,
-  Camera,
+  // Camera,
   CheckCircle2,
   ChevronLeft,
   AlertCircle,
@@ -138,8 +138,8 @@ export default function Settings() {
     avatar: "/default-avatar.png",
   });
 
-  const [imageUploading, setImageUploading] = useState(false);
-  const profileInputRef = useRef<HTMLInputElement>(null);
+  // const [imageUploading, setImageUploading] = useState(false);
+  // const profileInputRef = useRef<HTMLInputElement>(null);
 
   // Security state
   const [passwords, setPasswords] = useState({
@@ -194,7 +194,7 @@ export default function Settings() {
           avatar:
             data?.profileImage ??
             `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              data?.name || "User"
+              data?.name || "User",
             )}`,
         });
 
@@ -215,69 +215,115 @@ export default function Settings() {
 
   // --- Handlers ---
 
-  const uploadImage = async (file: File) => {
-    try {
-      setImageUploading(true);
+  // const uploadImage = async (file: File) => {
+  //   try {
+  //     setImageUploading(true);
 
-      const formData = new FormData();
-      formData.append("file", file);
+  //     const formData = new FormData();
+  //     formData.append("file", file);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+  //     const res = await fetch("/api/upload", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
 
-      const data = await res.json();
+  //     const data = await res.json();
 
-      if (!data.secure_url) {
-        throw new Error("Upload failed");
-      }
+  //     if (!data.secure_url) {
+  //       throw new Error("Upload failed");
+  //     }
 
-      // Add timestamp to force cache refresh
-      const imageUrl = `${data.secure_url}?t=${Date.now()}`;
+  //     // Add timestamp to force cache refresh
+  //     const imageUrl = `${data.secure_url}?t=${Date.now()}`;
 
-      setProfile((prev) => ({
-        ...prev,
-        avatar: imageUrl,
-      }));
+  //     setProfile((prev) => ({
+  //       ...prev,
+  //       avatar: imageUrl,
+  //     }));
 
-      // Optional: Immediately save the avatar URL to the backend profile
-      await fetch("/api/user/settings/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar: data.secure_url }), // Send clean URL without timestamp
-      });
+  //     // Optional: Immediately save the avatar URL to the backend profile
+  //     await fetch("/api/user/settings/profile", {
+  //       method: "PATCH",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ avatar: data.secure_url }), // Send clean URL without timestamp
+  //     });
 
-      toast.success("Profile photo updated!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to upload image");
-    } finally {
-      setImageUploading(false);
-    }
-  };
+  //     toast.success("Profile photo updated!");
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Failed to upload image");
+  //   } finally {
+  //     setImageUploading(false);
+  //   }
+  // };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) uploadImage(file);
-  };
+  // const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) uploadImage(file);
+  // };
 
-  const handleProfileUpdate = (field: keyof UserProfile, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }));
-  };
+  // const handleProfileUpdate = (field: keyof UserProfile, value: string) => {
+  //   setProfile((prev) => ({ ...prev, [field]: value }));
+  // };
 
   const handlePasswordChange = (
     field: keyof typeof passwords,
-    value: string
+    value: string,
   ) => {
     setPasswords((prev) => ({ ...prev, [field]: value }));
     // Clear error when user types
     if (passwordError) setPasswordError("");
   };
 
+  const handlePasswordUpdate = async () => {
+    // 1️⃣ Client-side validation
+    if (passwords.new !== passwords.confirm) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    if (passwords.new.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passwords.current,
+          newPassword: passwords.new,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPasswordError(data.error || "Failed to update password");
+        return;
+      }
+
+      // ✅ Success UI
+      setSaveMessage({
+        type: "success",
+        text: "Password updated successfully 🎉",
+      });
+
+      setPasswords({ current: "", new: "", confirm: "" });
+    } catch (error) {
+      setSaveMessage({
+        type: "error",
+        text: "Failed to update password",
+      });
+    } finally {
+      setTimeout(() => setSaveMessage({ type: "", text: "" }), 3000);
+    }
+  };
+
   const handleNotificationToggle = (
     category: keyof NotificationPreferences,
-    setting: string
+    setting: string,
   ) => {
     setNotifications((prev) => ({
       ...prev,
@@ -293,30 +339,30 @@ export default function Settings() {
     setPrivacy((prev) => ({ ...prev, [setting]: !prev[setting] }));
   };
 
-  const handlePasswordUpdate = async () => {
-    if (passwords.new !== passwords.confirm) {
-      setPasswordError("New passwords do not match");
-      return;
-    }
-    if (passwords.new.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
-      return;
-    }
+  // const handlePasswordUpdate = async () => {
+  //   if (passwords.new !== passwords.confirm) {
+  //     setPasswordError("New passwords do not match");
+  //     return;
+  //   }
+  //   if (passwords.new.length < 8) {
+  //     setPasswordError("Password must be at least 8 characters");
+  //     return;
+  //   }
 
-    try {
-      // Simulate API call
-      // await fetch('/api/user/password', ...)
-      setSaveMessage({
-        type: "success",
-        text: "Password updated successfully",
-      });
-      setPasswords({ current: "", new: "", confirm: "" });
-    } catch (error) {
-      setSaveMessage({ type: "error", text: "Failed to update password" });
-    } finally {
-      setTimeout(() => setSaveMessage({ type: "", text: "" }), 3000);
-    }
-  };
+  //   try {
+  //     // Simulate API call
+  //     // await fetch('/api/user/password', ...)
+  //     setSaveMessage({
+  //       type: "success",
+  //       text: "Password updated successfully",
+  //     });
+  //     setPasswords({ current: "", new: "", confirm: "" });
+  //   } catch (error) {
+  //     setSaveMessage({ type: "error", text: "Failed to update password" });
+  //   } finally {
+  //     setTimeout(() => setSaveMessage({ type: "", text: "" }), 3000);
+  //   }
+  // };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -405,9 +451,9 @@ export default function Settings() {
 
             <div className="space-y-6">
               {/* --- Profile Settings --- */}
-              <SettingsCard icon={User} title="Profile Settings">
-                {/* Avatar Section */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
+              {/* <SettingsCard icon={User} title="Profile Settings"> */}
+              {/* Avatar Section */}
+              {/* <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
                   <div className="relative group">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-100 shadow-md">
                       <img
@@ -444,10 +490,10 @@ export default function Settings() {
                       Supports JPG, PNG or GIF. Max file size 5MB.
                     </p>
                   </div>
-                </div>
+                </div> */}
 
-                {/* Profile Form */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Profile Form */}
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="name" className={labelClass}>
                       Full Name
@@ -509,8 +555,8 @@ export default function Settings() {
                       placeholder="Tell us a bit about yourself..."
                     />
                   </div>
-                </div>
-              </SettingsCard>
+                </div> */}
+              {/* </SettingsCard> */}
 
               {/* --- Account Security --- */}
               <SettingsCard icon={Lock} title="Account Security">

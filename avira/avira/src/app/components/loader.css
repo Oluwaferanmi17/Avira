@@ -1,0 +1,104 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+/* Animations for the loader */
+
+@keyframes circle-outer135 {
+  0% {
+    stroke-dashoffset: 25;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 301;
+  }
+  80% {
+    stroke-dashoffset: 276;
+  }
+  100% {
+    stroke-dashoffset: 276;
+  }
+}
+
+@keyframes circle-middle6123 {
+  0% {
+    stroke-dashoffset: 17;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 204;
+  }
+  80% {
+    stroke-dashoffset: 187;
+  }
+  100% {
+    stroke-dashoffset: 187;
+  }
+}
+
+@keyframes circle-inner162 {
+  0% {
+    stroke-dashoffset: 9;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 106;
+  }
+  80% {
+    stroke-dashoffset: 97;
+  }
+  100% {
+    stroke-dashoffset: 97;
+  }
+}
+
+@keyframes text-animation76 {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  50% {
+    clip-path: inset(0);
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* Custom animation utilities for Tailwind */
+@layer utilities {
+  .animate-circleOuterBack {
+    stroke-dasharray: 62.75 188.25;
+    animation: circle-outer135 1.8s ease infinite 0.3s;
+  }
+  .animate-circleOuterFront {
+    stroke-dasharray: 62.75 188.25;
+    animation: circle-outer135 1.8s ease infinite 0.15s;
+  }
+
+  .animate-circleMiddleBack {
+    stroke-dasharray: 42.5 127.5;
+    animation: circle-middle6123 1.8s ease infinite 0.25s;
+  }
+  .animate-circleMiddleFront {
+    stroke-dasharray: 42.5 127.5;
+    animation: circle-middle6123 1.8s ease infinite 0.1s;
+  }
+
+  .animate-circleInnerBack {
+    stroke-dasharray: 22 66;
+    animation: circle-inner162 1.8s ease infinite 0.2s;
+  }
+  .animate-circleInnerFront {
+    stroke-dasharray: 22 66;
+    animation: circle-inner162 1.8s ease infinite 0.05s;
+  }
+
+  .animate-textClip {
+    animation: text-animation76 3.6s ease infinite;
+  }
+}
