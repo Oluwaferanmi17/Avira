@@ -20,6 +20,16 @@ export async function GET(
 
     const experience = await prisma.experience.findUnique({
       where: { id: experienceId },
+      include: {
+        reviews: {
+          include: {
+            user: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
     });
 
     if (!experience) {

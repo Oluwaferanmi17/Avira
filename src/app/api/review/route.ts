@@ -55,9 +55,9 @@ export async function POST(req: Request) {
         rating,
         comment,
         userId: user.id,
-        stayId,
-        eventId,
-        experienceId,
+        stayId: stayId ? Number(stayId) : undefined,
+        eventId: eventId ? Number(eventId) : undefined,
+        experienceId: experienceId ? Number(experienceId) : undefined,
       },
     });
 

@@ -24,6 +24,14 @@ export async function GET(
         address: true,
         pricing: true,
         availability: true,
+        reviews: {
+          include: {
+            user: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 

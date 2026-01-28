@@ -9,22 +9,38 @@ import {
 } from "@react-google-maps/api";
 import { aviraMapStyle } from "@/lib/mapStyles";
 
-const containerStyle = {
-  width: "100%",
-  height: "350px",
-  borderRadius: "12px",
-};
-export default function GoogleMapComponent() {
-  const [center, setCenter] = useState({ lat: 6.5244, lng: 3.3792 }); // Default to Lagos
+interface GoogleMapComponentProps {
+  lat?: number;
+  lng?: number;
+  address?: string;
+  height?: string;
+}
+
+export default function GoogleMapComponent({
+  lat,
+  lng,
+  address,
+  height = "350px",
+}: GoogleMapComponentProps) {
+  const [center, setCenter] = useState({
+    lat: lat || 6.5244,
+    lng: lng || 3.3792,
+  }); // Default to Lagos if no props provided
   const [autocomplete, setAutocomplete] = useState<any>(null);
+
+  const containerStyle = {
+    width: "100%",
+    height: height,
+    borderRadius: "12px",
+  };
 
   const handlePlaceChanged = () => {
     if (autocomplete) {
       const place = autocomplete.getPlace();
       if (place.geometry?.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        setCenter({ lat, lng });
+        const newLat = place.geometry.location.lat();
+        const newLng = place.geometry.location.lng();
+        setCenter({ lat: newLat, lng: newLng });
       }
     }
   };
@@ -34,18 +50,20 @@ export default function GoogleMapComponent() {
       googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}
       libraries={["places"]}
     >
-      <div className="flex flex-col gap-2 mb-4">
-        <Autocomplete
-          onLoad={setAutocomplete}
-          onPlaceChanged={handlePlaceChanged}
-        >
-          <input
-            type="text"
-            placeholder="Search for a place..."
-            className="w-full p-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#00b894] outline-none"
-          />
-        </Autocomplete>
-      </div>
+      {!address && (
+        <div className="flex flex-col gap-2 mb-4">
+          <Autocomplete
+            onLoad={setAutocomplete}
+            onPlaceChanged={handlePlaceChanged}
+          >
+            <input
+              type="text"
+              placeholder="Search for a place..."
+              className="w-full p-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#00b894] outline-none"
+            />
+          </Autocomplete>
+        </div>
+      )}
 
       <GoogleMap
         mapContainerStyle={containerStyle}

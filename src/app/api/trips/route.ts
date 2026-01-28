@@ -67,9 +67,9 @@ export async function GET() {
     );
 
     // Normalize Stay Bookings
-    const stays = stayBookings.map((b) => ({
-      id: b.id,
-      type: "stay",
+    const stays = stayBookings.map((b: any) => ({
+      id: b.stay?.id, // Use Stay ID, not booking ID
+      bookingId: b.id,
       title: b.stay?.title || "Stay",
       location: b.stay?.address
         ? `${b.stay.address.city}, ${b.stay.address.country}`
@@ -86,8 +86,8 @@ export async function GET() {
 
     // Normalize Event Bookings
     const events = eventBookings
-      .filter((b) => b.event && b.event.user) // 🔥 CRITICAL
-      .map((b) => ({
+      .filter((b: any) => b.event && b.event.user) // 🔥 CRITICAL
+      .map((b: any) => ({
         id: b.event.id, // use event id
         bookingId: b.id,
         type: "event",
@@ -104,13 +104,12 @@ export async function GET() {
       }));
 
     // Normalize Experience Bookings
-    const experiences = experienceBookings.map((b) => ({
-      id: b.id,
-      type: "experience",
+    const experiences = experienceBookings.map((b: any) => ({
+      id: b.experience?.id, // Use Experience ID, not booking ID
+      bookingId: b.id,
       title: b.experience?.title || "Experience",
-      location: `${b.experience?.venue || ""}, ${b.experience?.city || ""}, ${
-        b.experience?.country || ""
-      }`,
+      location: `${b.experience?.venue || ""}, ${b.experience?.city || ""}, ${b.experience?.country || ""
+        }`,
       dateStart: b.date,
       dateEnd: b.date,
       price: b.experience?.price ? `₦${b.experience.price}` : "Free",

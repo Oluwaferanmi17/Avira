@@ -45,14 +45,14 @@ export default function ReviewModal({
     });
 
     if (res.ok) {
-      toast.success("You have left the review successfully!");
+      toast.success("Thank you for your review!");
       onSuccess?.();
       onClose();
       setRating(0);
       setComment("");
     } else {
       const error = await res.json();
-      toast.error(error.message || "Failed to submit review");
+      toast.error(error.error || error.message || "Failed to submit review");
     }
 
     setLoading(false);
@@ -82,9 +82,8 @@ export default function ReviewModal({
                 <span
                   key={star}
                   onClick={() => setRating(star)}
-                  className={`cursor-pointer text-3xl ${
-                    star <= rating ? "text-yellow-400" : "text-gray-300"
-                  }`}
+                  className={`cursor-pointer text-3xl ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                    }`}
                 >
                   ★
                 </span>

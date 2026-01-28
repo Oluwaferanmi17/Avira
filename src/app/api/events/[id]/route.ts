@@ -15,6 +15,16 @@ export async function GET(
   try {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
+      include: {
+        reviews: {
+          include: {
+            user: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
     });
 
     if (!event) {
