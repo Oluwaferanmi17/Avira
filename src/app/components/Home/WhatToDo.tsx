@@ -11,27 +11,27 @@ const WhatToDo = () => {
       description:
         "Browse unique homes, hotels, and luxury stays across Nigeria.",
       icon: <Bed className="w-8 h-8 text-[#00b894]" />,
-      href: "/stays", // Updated to standard routing convention
+      href: "Page/stay", // Updated to standard routing convention
     },
     {
       title: "Explore Events",
       description:
         "Discover festivals, concerts, and cultural activities near you.",
       icon: <CalendarDays className="w-8 h-8 text-[#00b894]" />,
-      href: "/events",
+      href: "Page/events",
     },
     {
       title: "Local Experiences",
       description: "Visit amusement parks, museums, and guided food tours.",
       icon: <Map className="w-8 h-8 text-[#00b894]" />,
-      href: "/experiences",
+      href: "Page/experiences",
     },
     {
       title: "Track Your Journeys",
       description:
         "Keep a digital diary of your past memories and future plans.",
       icon: <ScrollText className="w-8 h-8 text-[#00b894]" />,
-      href: "/trips",
+      href: "Page/trips",
     },
   ];
 

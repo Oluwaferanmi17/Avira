@@ -84,7 +84,9 @@ export default function BookingConfirm() {
     try {
       // Ensure we have a valid userId. If not in booking store, we might need to fetch it from session.
       // Based on schema, userId is required for Payment record.
-      const userId = booking.userId || (typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+      const userId =
+        booking.userId ||
+        (typeof window !== "undefined" ? localStorage.getItem("userId") : null);
 
       if (!userId) {
         throw new Error("User session not found. Please log in again.");
@@ -105,7 +107,9 @@ export default function BookingConfirm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || data.message || "Failed to initialize payment");
+        throw new Error(
+          data.error || data.message || "Failed to initialize payment",
+        );
       }
 
       // 🔥 Redirect to Paystack

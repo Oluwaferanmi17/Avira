@@ -1,19 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Bell,
-  // Building2,
-  // Clock,
+  Building2,
+  Clock,
   CreditCard,
-  // DollarSign,
-  // Globe,
-  // Mail,
-  // MapPin,
-  // Phone,
-  // User,
+  DollarSign,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  User,
   Save,
-  // Check,
-  // Plus,
-  // Trash2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -142,16 +140,16 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Handlers
-  // const handleProfileChange = (field: keyof ProfileData, value: string) => {
-  //   setProfile((prev) => ({ ...prev, [field]: value }));
-  // };
+  const handleProfileChange = (field: keyof ProfileData, value: string) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
+  };
 
-  // const handleListingChange = (
-  //   field: keyof ListingData,
-  //   value: string | boolean | string[],
-  // ) => {
-  //   setListing((prev) => ({ ...prev, [field]: value }));
-  // };
+  const handleListingChange = (
+    field: keyof ListingData,
+    value: string | boolean | string[],
+  ) => {
+    setListing((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handlePaymentChange = (field: keyof PaymentData, value: string) => {
     setPayment((prev) => ({ ...prev, [field]: value }));
@@ -161,22 +159,22 @@ const Settings = () => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // const addRule = () => {
-  //   if (newRule.trim()) {
-  //     handleListingChange("houseRules", [
-  //       ...listing.houseRules,
-  //       newRule.trim(),
-  //     ]);
-  //     setNewRule("");
-  //   }
-  // };
+  const addRule = () => {
+    if (newRule.trim()) {
+      handleListingChange("houseRules", [
+        ...listing.houseRules,
+        newRule.trim(),
+      ]);
+      setNewRule("");
+    }
+  };
 
-  // const removeRule = (ruleToRemove: string) => {
-  //   handleListingChange(
-  //     "houseRules",
-  //     listing.houseRules.filter((r) => r !== ruleToRemove),
-  //   );
-  // };
+  const removeRule = (ruleToRemove: string) => {
+    handleListingChange(
+      "houseRules",
+      listing.houseRules.filter((r) => r !== ruleToRemove),
+    );
+  };
 
   const handleSaveAll = () => {
     setIsSaving(true);
@@ -197,7 +195,7 @@ const Settings = () => {
     "w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all";
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-24">
+    <div className="min-h-screen bg-gray-50/50 pb-12">
       <div className="max-w-3xl mx-auto space-y-8 pt-8 px-4">
         {/* Header */}
         <div>
@@ -208,7 +206,7 @@ const Settings = () => {
         </div>
 
         {/* 1. Host Profile Section */}
-        {/* <SectionCard icon={User} title="Host Profile">
+        <SectionCard icon={User} title="Host Profile">
           <div className="space-y-5">
             <InputGroup label="Business Name">
               <input
@@ -273,10 +271,10 @@ const Settings = () => {
               />
             </InputGroup>
           </div>
-        </SectionCard> */}
+        </SectionCard>
 
         {/* 2. Listing Preferences Section */}
-        {/* <SectionCard icon={Building2} title="Listing Preferences">
+        <SectionCard icon={Building2} title="Listing Preferences">
           <div className="space-y-6">
             <div className="grid md:grid-cols-3 gap-5">
               <InputGroup label="Default Price">
@@ -431,7 +429,7 @@ const Settings = () => {
               </div>
             </div>
           </div>
-        </SectionCard> */}
+        </SectionCard>
 
         {/* 3. Payment Section */}
         <SectionCard icon={CreditCard} title="Payment & Payout">
@@ -559,36 +557,30 @@ const Settings = () => {
             ))}
           </div>
         </SectionCard>
-      </div>
 
-      {/* Floating Save Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className="text-sm text-gray-500 hidden sm:block">
-            Last saved: Just now
-          </span>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <button
-              className="flex-1 sm:flex-none px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-              onClick={() => window.location.reload()} // Mock cancel
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveAll}
-              disabled={isSaving}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
-            >
-              {isSaving ? (
-                "Saving..."
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </div>
+        {/* Action Buttons (Inline at bottom) */}
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            className="px-6 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+            onClick={() => window.location.reload()}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSaveAll}
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+          >
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

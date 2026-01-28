@@ -1,40 +1,47 @@
-// /api/host/reviews/route.ts
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import prisma from "../../../../lib/prismadb";
-import { authOptions } from "../../auth/[...nextauth]/route";
-// import Stay from "@/app/Page/stay/page";
+import prisma from "@/lib/prismadb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const host = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  });
-  if (!host) {
-    return NextResponse.json({ error: "Host not found" }, { status: 404 });
-  }
-  const reviews = await prisma.review.findMany({
-    where: {
-      OR: [
-        { stay: { hostId: host.id } },
-        { event: { userId: host.id } },
-        { experience: { hostId: host.id } },
-      ],
-    },
-    include: {
-      user: true,
-      reply: true,
-      stay: true,
-      event: true,
-      experience: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  console.log(reviews);
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
 
-  return NextResponse.json(reviews);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const reviews = await prisma.review.findMany({
+      where: {
+        OR: [
+          { stay: { hostId: user.id } },
+          { event: { userId: user.id } },
+          { experience: { hostId: user.id } },
+        ],
+      },
+      include: {
+        user: true, // reviewer
+        stay: true,
+        event: true,
+        experience: true,
+        reply: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(reviews);
+  } catch (error) {
+    console.error("Error fetching host reviews:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
 }

@@ -16,11 +16,11 @@ interface AviraMapProps {
 // We import the entire MapContainer ecosystem dynamically to strictly prevent SSR issues
 const MapContainer = dynamic(
   async () => (await import("react-leaflet")).MapContainer,
-  { ssr: false }
+  { ssr: false },
 );
 const TileLayer = dynamic(
   async () => (await import("react-leaflet")).TileLayer,
-  { ssr: false }
+  { ssr: false },
 );
 const Marker = dynamic(async () => (await import("react-leaflet")).Marker, {
   ssr: false,
@@ -42,15 +42,23 @@ const MapController = dynamic(
       return null;
     };
   },
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function AviraMapCore({ lat, lng, zoom = 13 }: AviraMapProps) {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [resolvedAddress, setResolvedAddress] =
+    useState<string>("Loading address...");
+  const [addressParts, setAddressParts] = useState<{
+    street?: string;
+    state?: string;
+    country?: string;
+  }>({});
+
   // Default to props coordinates, or fallback to Abuja
   const [activeCoords, setActiveCoords] = useState<[number, number] | null>(
-    lat && lng ? [lat, lng] : [9.0765, 7.3986]
+    lat && lng ? [lat, lng] : [9.0765, 7.3986],
   );
 
   const [customIcon, setCustomIcon] = useState<any>(null);
@@ -95,8 +103,8 @@ export default function AviraMapCore({ lat, lng, zoom = 13 }: AviraMapProps) {
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            search
-          )}&addressdetails=1&limit=5`
+            search,
+          )}&addressdetails=1&limit=5`,
         );
         const data = await res.json();
         setSuggestions(data);
@@ -107,6 +115,34 @@ export default function AviraMapCore({ lat, lng, zoom = 13 }: AviraMapProps) {
 
     return () => clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    if (!activeCoords) return;
+
+    const [lat, lon] = activeCoords;
+
+    const fetchAddress = async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+        );
+        const data = await res.json();
+
+        const address = data.address || {};
+
+        setAddressParts({
+          street: address.road || address.neighbourhood || address.suburb || "",
+          state: address.state || "",
+          country: address.country || "",
+        });
+      } catch (err) {
+        console.error("Reverse geocoding error:", err);
+        setAddressParts({});
+      }
+    };
+
+    fetchAddress();
+  }, [activeCoords]);
 
   const handleSelectSuggestion = (place: any) => {
     const newLat = parseFloat(place.lat);
@@ -168,8 +204,16 @@ export default function AviraMapCore({ lat, lng, zoom = 13 }: AviraMapProps) {
         {/* The Main Marker */}
         {activeCoords && (
           <Marker position={activeCoords} icon={customIcon}>
-            <Popup className="font-semibold text-slate-700">
-              {search || "Location"}
+            <Popup className="text-sm text-slate-700 space-y-1">
+              <div>
+                <strong>Street:</strong> {addressParts.street || "—"}
+              </div>
+              <div>
+                <strong>State:</strong> {addressParts.state || "—"}
+              </div>
+              <div>
+                <strong>Country:</strong> {addressParts.country || "—"}
+              </div>
             </Popup>
           </Marker>
         )}

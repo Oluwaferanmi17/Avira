@@ -142,7 +142,7 @@ export default function ExperienceCategories() {
                   {item.description}
                 </p>
 
-                <Link href={`/category/${item.id}`} className="mt-auto">
+                <Link href={`Page/experiences`} className="mt-auto">
                   <button className="w-full bg-gray-50 hover:bg-[#00b894] hover:text-white text-gray-700 font-semibold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group/btn">
                     Explore {item.title}
                     <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
@@ -172,7 +172,7 @@ export default function ExperienceCategories() {
               and start planning your adventure today.
             </p>
 
-            <Link href="/experiences">
+            <Link href="Page/experiences">
               <button className="bg-white text-[#00b894] font-bold text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all">
                 View All Experiences
               </button>

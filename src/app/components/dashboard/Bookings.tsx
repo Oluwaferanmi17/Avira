@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar"; // Assuming you have this component
-import router from "next/router";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // Define strict types
 interface Booking {
@@ -38,7 +38,7 @@ interface Booking {
 const Bookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter();
   // Calendar Modal State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);

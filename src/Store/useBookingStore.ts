@@ -21,7 +21,7 @@ interface Cost {
 interface BookingState {
   reservationId: string;
   dbId?: string;
-
+  userId: string;
   // Optional depending on type
   stay?: {
     id: string;
@@ -79,6 +79,6 @@ export const useBookingStore = create<BookingStore>()(
       setBooking: (data) => set({ booking: data }),
       clearBooking: () => set({ booking: null }),
     }),
-    { name: "avira-booking" }
-  )
+    { name: "avira-booking" },
+  ),
 );

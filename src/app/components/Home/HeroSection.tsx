@@ -8,6 +8,7 @@ import { FaSearchLocation } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import Image from "next/image"; // Import Next.js Image
 import WelcomeToast from "./WelcomeToast";
+import { useRouter } from "next/navigation";
 
 // Ensure you import slick-carousel CSS in your globals.css or here
 import "slick-carousel/slick/slick.css";
@@ -24,6 +25,8 @@ const HeroSection = () => {
   const { data: session, status: authStatus } = useSession();
   const [showWelcome, setShowWelcome] = useState(false);
   const prevStatus = useRef(authStatus);
+  const router = useRouter();
+  const [destination, setDestination] = useState("");
 
   const sliderSettings = {
     dots: true,
@@ -61,6 +64,11 @@ const HeroSection = () => {
 
     prevStatus.current = authStatus;
   }, [authStatus]);
+  const handleSearch = () => {
+    if (!destination.trim()) return;
+
+    router.push(`/Page/search?destination=${encodeURIComponent(destination)}`);
+  };
 
   return (
     <section className="relative bg-linear-to-br from-green-50 via-white to-orange-50 pt-28 pb-12 px-6 md:px-12 overflow-hidden min-h-[600px] flex items-center">
@@ -100,14 +108,25 @@ const HeroSection = () => {
           </div>
 
           <div className="max-w-md py-6">
-            <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 shadow-sm bg-white focus-within:ring-2 focus-within:ring-[#00b894] transition-all">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+              }}
+              className="flex items-center border border-gray-300 rounded-xl px-4 py-3 shadow-sm bg-white focus-within:ring-2 focus-within:ring-[#00b894] transition-all"
+            >
               <FaSearchLocation className="text-gray-500 mr-3 text-xl" />
+
               <input
                 type="text"
                 placeholder="Where are you going?"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
                 className="w-full outline-none placeholder:text-gray-500 text-gray-700"
               />
-            </div>
+
+              <button type="submit" className="hidden" />
+            </form>
           </div>
         </motion.div>
 

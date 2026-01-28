@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -40,7 +39,6 @@ export async function POST(req: Request) {
       stay.pricing.cleaningFee +
       stay.pricing.serviceFee;
 
-    // ✅ TRANSACTION (prevents race conditions)
     const booking = await prisma.$transaction(async (tx) => {
       // 🔒 1. Check for overlapping bookings
       const conflict = await tx.stayBooking.findFirst({
@@ -57,8 +55,8 @@ export async function POST(req: Request) {
         throw new Error("DOUBLE_BOOKING");
       }
 
-      // ✅ 2. Create booking only if safe
-      return await tx.stayBooking.create({
+      // ✅ 2. Create booking
+      const createdBooking = await tx.stayBooking.create({
         data: {
           userId,
           stayId,
@@ -70,6 +68,20 @@ export async function POST(req: Request) {
           total,
         },
       });
+
+      // 🔔 3. Create notification
+      await tx.notification.create({
+        data: {
+          userId,
+          type: "BOOKING",
+          title: "Booking Successful",
+          message: "Your stay has been booked successfully.",
+          iconColor: "green",
+        },
+      });
+
+      // ✅ 4. Return booking LAST
+      return createdBooking;
     });
 
     return NextResponse.json(booking, { status: 201 });

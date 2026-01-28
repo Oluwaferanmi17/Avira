@@ -17,31 +17,43 @@ interface Notification {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { data: session } = useSession();
-  const currentUserId = session?.user?.id;
+  const userChannel = session?.user?.email;
   useEffect(() => {
     const fetchNotifications = async () => {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notification", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        console.error("Failed to fetch notifications");
+        return;
+      }
+
       const data = await res.json();
       setNotifications(data);
     };
+
     fetchNotifications();
   }, []);
 
   // Real-time listener
   useEffect(() => {
-    if (!currentUserId) return; // Wait until user data is loaded
-    const channel = pusherClient.subscribe(`user-${currentUserId}`);
-    pusherClient.subscribe("notifications-channel");
+    if (!userChannel) return;
+
+    pusherClient.subscribe(`user-${userChannel}`);
     pusherClient.bind("new-notification", (newNotif: Notification) => {
       setNotifications((prev) => [newNotif, ...prev]);
     });
+
     return () => {
-      pusherClient.unsubscribe("notifications-channel");
+      pusherClient.unsubscribe(`user-${userChannel}`);
     };
-  }, [currentUserId]);
+  }, [userChannel]);
 
   const clearAll = async () => {
-    await fetch("/api/notifications/clear", { method: "DELETE" });
+    await fetch("/api/notification/clear", { method: "DELETE" });
     setNotifications([]);
   };
 

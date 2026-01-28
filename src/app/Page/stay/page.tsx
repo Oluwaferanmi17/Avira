@@ -1,8 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 import { MapPin } from "lucide-react";
 import AnimatedSearchBar from "../../components/AnimatedSearchBar";
 import Link from "next/link";
-// import Image from "next/image"; // Import Next Image
+import Image from "next/image"; // Import Next Image
 import NavBar from "../../components/Home/NavBar";
 import getStay from "../../actions/getStays";
 import HeartButton from "../../components/Heart";
@@ -20,7 +19,11 @@ interface Stay {
     basePrice: number;
   };
 }
-
+const formatter = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
 const Stay = async () => {
   const stays = await getStay();
 
@@ -38,11 +41,11 @@ const Stay = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50">
+    <div className="min-h-screen bg-linear-to-br from-green-50 via-white to-orange-50">
       <NavBar />
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-green-50 via-white to-orange-50 text-white py-16">
+      <div className="bg-linear-to-br from-green-50 via-white to-orange-50 text-white py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-center mb-2 text-[#00b894]">
             Find Your Perfect Stay
@@ -88,11 +91,11 @@ const Stay = async () => {
                   {/* Image Container */}
                   <div className="aspect-video bg-muted rounded-t-lg overflow-hidden relative mb-4">
                     {/* 3. Optimization: Using Next/Image */}
-                    <img
+                    <Image
                       src={stay.photos?.[0] || "/placeholder.svg"}
                       alt={stay.title}
-                      // fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
@@ -103,7 +106,7 @@ const Stay = async () => {
                         {stay.title}
                       </h3>
                       <div className="flex items-center gap-1 text-sm">
-                        <span>⭐</span>
+                        {/* <span>⭐</span> */}
                         {/* <span>{stay.rating?.toFixed(1)}</span> */}
                       </div>
                     </div>
@@ -137,7 +140,7 @@ const Stay = async () => {
                   {stay.pricing && (
                     <div className="mt-auto pt-3 border-t flex justify-end items-center">
                       <span className="font-bold text-lg text-[#00b894]">
-                        ₦{stay.pricing.basePrice}
+                        {formatter.format(stay.pricing.basePrice)}
                       </span>
                       <span className="text-gray-500 text-sm ml-1">
                         / night

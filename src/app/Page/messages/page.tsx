@@ -23,7 +23,7 @@ interface Message {
   id: string;
   text: string;
   createdAt: string;
-  senderId: User;
+  senderId: string;
 }
 
 interface Conversation {
@@ -65,17 +65,13 @@ export default function MessagesPage({
         if (!res.ok) throw new Error("Failed to fetch conversations");
         const data = await res.json();
         setConversations(data);
-
-        // If no ID provided via props, optionally select the first one
-        if (!activeChatId && data.length > 0) {
-          // setActiveChatId(data[0].id); // Uncomment if you want auto-select
-        }
       } catch (error) {
         console.error("Error loading conversations:", error);
       }
     };
+
     fetchConversations();
-  }, [activeChatId]);
+  }, []);
 
   // --- 2. Fetch Messages ---
   useEffect(() => {

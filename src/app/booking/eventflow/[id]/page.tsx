@@ -14,7 +14,7 @@ import {
   Heart,
   Loader2,
 } from "lucide-react";
-
+import { useSession } from "next-auth/react";
 // Components
 import NavBar from "@/app/components/Home/NavBar";
 // import Footer from "@/app/components/Footer"; // Assuming you have this, or remove if not
@@ -69,6 +69,7 @@ function EventFlow() {
   const [event, setEvent] = useState<EventType | null>(null);
   const [loading, setLoading] = useState(true);
   const setBooking = useBookingStore((s) => s.setBooking);
+  const { data: session } = useSession();
 
   // Booking State
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -142,7 +143,10 @@ function EventFlow() {
   /** Proceed to booking confirm */
   async function proceed() {
     if (!date || tickets <= 0 || !event) return;
-
+    if (!session?.user?.id) {
+      alert("You must be logged in to book");
+      return;
+    }
     const res = await fetch("/api/bookingEvent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -163,7 +167,7 @@ function EventFlow() {
     setBooking({
       reservationId: data.id,
       dbId: data.id,
-
+      userId: session?.user?.id,
       type: "event",
 
       item: {

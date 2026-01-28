@@ -146,7 +146,7 @@ const CalendarPicker: React.FC<CalendarProps> = ({
                 }
                 ${
                   inRange && !selected
-                    ? "bg-gray-100 rounded-none w-full !mx-0"
+                    ? "bg-gray-100 rounded-none w-full mx-0"
                     : ""
                 }
                 ${
@@ -219,13 +219,13 @@ export default function AirbnbSearch() {
     }
   };
 
-  const resetSearch = () => {
-    setDestination("");
-    setCheckIn(null);
-    setCheckOut(null);
-    setStep("DESTINATION");
-    setActiveField(null);
-  };
+  // const resetSearch = () => {
+  //   setDestination("");
+  //   setCheckIn(null);
+  //   setCheckOut(null);
+  //   setStep("DESTINATION");
+  //   setActiveField(null);
+  // };
 
   // const router = useRouter();
 
@@ -291,8 +291,8 @@ export default function AirbnbSearch() {
 
     router.push(
       `/Page/search?destination=${encodeURIComponent(
-        destination
-      )}&checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}`
+        destination,
+      )}&checkIn=${checkIn.toISOString()}&checkOut=${checkOut.toISOString()}`,
     );
   };
 
@@ -341,7 +341,7 @@ export default function AirbnbSearch() {
             )}
           </div>
 
-          <div className="h-8 w-[1px] bg-gray-200"></div>
+          <div className="h-8 w-1px bg-gray-200"></div>
 
           {/* 2. Check-in Selector */}
           <div
@@ -363,7 +363,7 @@ export default function AirbnbSearch() {
             </div>
           </div>
 
-          <div className="h-8 w-[1px] bg-gray-200"></div>
+          <div className="h-8 w-1px bg-gray-200"></div>
 
           {/* 3. Check-out Selector */}
           <div

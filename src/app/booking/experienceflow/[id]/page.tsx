@@ -35,6 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { withAuth } from "@/app/components/withAuth";
+import { useSession } from "next-auth/react";
 
 // --- Types based on your Schema ---
 
@@ -86,7 +87,8 @@ function ExperienceFlow() {
   const [experience, setExperience] = useState<ExperienceType | null>(null);
   const [loading, setLoading] = useState(true);
   const setBooking = useBookingStore((s) => s.setBooking);
-
+  // const session = useSession();
+  const { data: session } = useSession();
   // Booking State
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [guests, setGuests] = useState<number>(1);
@@ -163,7 +165,10 @@ function ExperienceFlow() {
   /** Proceed to booking confirm */
   async function proceed() {
     if (!date || guests <= 0 || !experience) return;
-
+    if (!session?.user?.id) {
+      alert("You must be logged in to book");
+      return;
+    }
     const res = await fetch("/api/bookingExperience", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -184,7 +189,7 @@ function ExperienceFlow() {
     setBooking({
       reservationId: data.id,
       dbId: data.id,
-
+      userId: session?.user?.id,
       type: "experience",
 
       item: {

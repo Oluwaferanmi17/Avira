@@ -7,6 +7,7 @@ import NavBar from "../../components/Home/NavBar";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/Store/useBookingStore";
 import HeartButton from "@/app/components/Heart";
+import { useSession } from "next-auth/react";
 
 // --- 1. Types & Interfaces ---
 interface EventData {
@@ -68,6 +69,7 @@ const Events = () => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const setBooking = useBookingStore((state) => state.setBooking);
+  const { data: session } = useSession();
 
   useEffect(() => {
     async function fetchEvents() {
@@ -100,7 +102,12 @@ const Events = () => {
   }, [events, search]);
 
   const handleAddToTrip = (event: EventData) => {
+    if (!session?.user?.id) {
+      alert("You must be logged in to book");
+      return;
+    }
     setBooking({
+      userId: session?.user?.id,
       type: "event",
       item: {
         id: event.id,

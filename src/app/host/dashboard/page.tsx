@@ -17,7 +17,7 @@ import Listing from "@/app/components/dashboard/Listing";
 import Bookings from "@/app/components/dashboard/Bookings";
 import Messages from "@/app/components/dashboard/Messages";
 import Reviews from "@/app/components/dashboard/Reviews";
-import Settings from "@/app/components/dashboard/Settings";
+// import Settings from "@/app/components/dashboard/Settings";
 import Analytics from "@/app/components/dashboard/Analytics";
 import Payouts from "@/app/components/dashboard/Payouts";
 import Dashboard from "@/app/components/dashboard/Dashboard";
@@ -80,7 +80,7 @@ export default function HostDashboard() {
           {activeTab === "Bookings" && <Bookings />}
           {activeTab === "Messages" && <Messages />}
           {activeTab === "Reviews" && <Reviews />}
-          {activeTab === "Settings" && <Settings />}
+          {/* {activeTab === "Settings" && <Settings />} */}
           {activeTab === "Analytics" && <Analytics />}
           {activeTab === "Payouts" && <Payouts />}
         </main>

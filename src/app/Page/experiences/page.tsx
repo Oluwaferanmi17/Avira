@@ -8,6 +8,7 @@ import NavBar from "../../components/Home/NavBar";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/Store/useBookingStore";
 import { getExperience } from "@/app/actions/getExperience";
+import { useSession } from "next-auth/react";
 
 // 1. Define the Interface for Type Safety
 interface ExperienceItem {
@@ -26,6 +27,7 @@ const Experience = () => {
   const [experiences, setExperience] = useState<ExperienceItem[]>([]);
   const [loading, setLoading] = useState(true); // Added loading state
   const [search, setSearch] = useState("");
+  const { data: session } = useSession();
 
   const router = useRouter();
   const setBooking = useBookingStore((state) => state.setBooking);
@@ -54,7 +56,12 @@ const Experience = () => {
   );
 
   const handleBookExperience = (experience: ExperienceItem) => {
+    if (!session?.user?.id) {
+      alert("You must be logged in to book");
+      return;
+    }
     setBooking({
+      userId: session?.user?.id,
       type: "experience",
       experience: {
         id: experience.id.toString(),

@@ -10,7 +10,7 @@ import { differenceInCalendarDays, format } from "date-fns";
 // Components
 import NavBar from "../../../components/Home/NavBar";
 import Map from "../../../components/AviraMapCore";
-import { Calendar } from "../../../../components/ui/calendar";
+// import { Calendar } from "../../../../components/ui/calendar";
 import PhotoGallery from "@/app/components/PhotoGallery";
 import { withAuth } from "../../../components/withAuth";
 
@@ -125,9 +125,13 @@ function StayDetails() {
   // 4. Handlers
   const handleBookNow = () => {
     if (!stay || !range?.from || !range?.to || nights <= 0) return;
-
+    if (!session?.user?.id) {
+      alert("You must be logged in to book");
+      return;
+    }
     useBookingStore.getState().setBooking({
       reservationId: crypto.randomUUID(),
+      userId: session?.user?.id,
       type: "stay",
       item: {
         id: stay.id,
@@ -303,7 +307,7 @@ function StayDetails() {
                       : "Address available after booking"}
                   </p>
                   <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-200">
-                    <Map />
+                    {/* <Map /> */}
                   </div>
                 </div>
               </div>

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const existingUser = await prisma.user.findUnique({
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     if (existingUser) {
       return NextResponse.json(
         { error: "Email already registered" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(
       { message: "User created successfully", user },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error instanceof Error) {

@@ -164,22 +164,31 @@ const AuthForm = () => {
               <FcGoogle className="text-xl" />
               Google
             </button>
-            <button
+            {/* <button
               className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2 "
               onClick={() => signIn("apple", { callbackUrl: "/" })}
             >
               <FaApple className="text-xl" />
               Apple
-            </button>
+            </button> */}
+            <div className="">
+              <button
+                className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2 item-"
+                onClick={() => signIn("github", { callbackUrl: "/" })}
+              >
+                <FaGithub className="text-xl" />
+                GitHub
+              </button>
+            </div>
           </div>
           <div className="ml-24">
-            <button
+            {/* <button
               className="border px-12 py-2 rounded-lg flex items-center gap-2 hover:border-[#00b894] hover:cursor-pointer hover:border-2 item-"
               onClick={() => signIn("github", { callbackUrl: "/" })}
             >
               <FaGithub className="text-xl" />
               GitHub
-            </button>
+            </button> */}
           </div>
         </div>
         <p className="text-center text-sm text-gray-600">

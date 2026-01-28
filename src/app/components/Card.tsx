@@ -11,6 +11,7 @@ interface RetreatCardProps {
   location: string;
   price: string;
   rating?: number;
+  reviewCount?: number;
   description: string;
   link?: string;
   amenities?: string[];

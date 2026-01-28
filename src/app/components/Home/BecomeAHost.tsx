@@ -61,7 +61,7 @@ const BecomeAHost = () => {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/host/signup">
+              <Link href="/host">
                 <button className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white text-[#00b894] font-bold text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-1">
                   Start Hosting
                 </button>

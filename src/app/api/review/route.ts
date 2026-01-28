@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import prisma from "../../../lib/prismadb";
 import { getServerSession } from "next-auth";
@@ -13,13 +14,42 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { rating, comment, stayId, eventId, experienceId } = body;
 
+    // 🧠 Ensure exactly one target
+    const targets = [stayId, eventId, experienceId].filter(Boolean);
+    if (targets.length !== 1) {
+      return NextResponse.json(
+        { error: "Review must belong to exactly one item" },
+        { status: 400 },
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
-    if (!user)
+    if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
+    // 🔍 Build duplicate check dynamically
+    const where: any = {
+      userId: user.id,
+    };
+
+    if (stayId) where.stayId = stayId;
+    if (eventId) where.eventId = eventId;
+    if (experienceId) where.experienceId = experienceId;
+
+    const existingReview = await prisma.review.findFirst({ where });
+
+    if (existingReview) {
+      return NextResponse.json(
+        { error: "You have already reviewed this item" },
+        { status: 400 },
+      );
+    }
+
+    // ✅ Safe create
     const review = await prisma.review.create({
       data: {
         rating,
@@ -32,11 +62,20 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(review);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating review:", error);
+
+    // Extra safety net
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Duplicate review not allowed" },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -50,9 +89,9 @@ export async function GET(req: Request) {
 
     // Build filter dynamically
     const filters = [];
-    if (stayId) filters.push({ stayId });
-    if (eventId) filters.push({ eventId });
-    if (experienceId) filters.push({ experienceId });
+    if (stayId) filters.push({ stayId: Number(stayId) });
+    if (eventId) filters.push({ eventId: Number(eventId) });
+    if (experienceId) filters.push({ experienceId: Number(experienceId) });
 
     const whereClause = filters.length > 0 ? { OR: filters } : {}; // if none provided, return all
 
@@ -67,7 +106,7 @@ export async function GET(req: Request) {
     console.error("Error fetching reviews:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

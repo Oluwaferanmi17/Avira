@@ -4,8 +4,45 @@ import { ArrowRight, CalendarDays, MapPin, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+interface EventType {
+  id: number;
+  title: string;
+  description: string;
+  photos: string[];
+  startDate: string;
+  endDate: string;
+  venue: string;
+  city: string;
+  country: string;
+  ticketPrice: number;
+  capacity: number;
+}
 const Events = () => {
+  const [event, setEvent] = useState<EventType | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("/api/events");
+        if (!res.ok) throw new Error("Failed to fetch events");
+
+        const data: EventType[] = await res.json();
+
+        // ✅ take the first event only
+        setEvent(data[0] || null);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
+  if (loading || !event) return null;
   return (
     <section className="bg-linear-to-br from-green-50 via-white to-orange-50 py-16 px-6 md:px-12 rounded-3xl my-16 max-w-7xl mx-auto overflow-hidden">
       {/* Header */}
@@ -37,12 +74,10 @@ const Events = () => {
         {/* Image Section */}
         <div className="relative w-full md:w-1/2 h-64 md:h-auto md:min-h-[400px]">
           <Image
-            src="https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=800&q=80"
-            alt="Felabration Festival Crowd"
+            src={event.photos?.[0] || "/placeholder.jpg"}
+            alt={event.title}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="(max-w-768px) 100vw, 50vw"
-            priority // Load this image quickly as it is featured
+            className="object-cover group-hover:scale-105 transition-transform duration-700"
           />
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm z-10">
             🎵 Music & Culture
@@ -53,13 +88,10 @@ const Events = () => {
         <div className="p-8 md:p-12 flex flex-col justify-center w-full md:w-1/2 bg-white/50 backdrop-blur-sm">
           <div>
             <h3 className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-              Felabration 2026
+              {event.title}
             </h3>
             <p className="text-gray-600 mt-4 leading-relaxed text-sm md:text-base">
-              Join the biggest celebration of Afrobeat music and culture.
-              Honoring the legacy of Fela Kuti with performances from top
-              African artists, art exhibitions, and the famous &quot;Senior
-              Man&quot; debates at the New Afrika Shrine.
+              {event.description}
             </p>
 
             {/* Details Grid */}
@@ -68,7 +100,14 @@ const Events = () => {
                 <div className="p-2 bg-green-50 rounded-lg text-[#00b894]">
                   <CalendarDays className="w-5 h-5" />
                 </div>
-                <span className="font-medium">October 12–18, 2026</span>
+                <span>
+                  {event.startDate && event.endDate
+                    ? `${format(new Date(event.startDate), "MMM d")} – ${format(
+                        new Date(event.endDate),
+                        "MMM d, yyyy",
+                      )}`
+                    : "Date TBD"}
+                </span>
               </div>
 
               <div className="flex items-center gap-3 text-gray-700">
@@ -76,7 +115,7 @@ const Events = () => {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <span className="font-medium">
-                  New Afrika Shrine, Ikeja, Lagos
+                  {event.venue}, {event.city}, {event.country}
                 </span>
               </div>
 
@@ -84,7 +123,9 @@ const Events = () => {
                 <div className="p-2 bg-green-50 rounded-lg text-[#00b894]">
                   <Users className="w-5 h-5" />
                 </div>
-                <span className="font-medium">30,000+ Attendees Expected</span>
+                <span className="font-medium">
+                  {event.capacity} Attendees Expected
+                </span>
               </div>
             </div>
           </div>
@@ -93,11 +134,13 @@ const Events = () => {
           <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div>
               <p className="text-sm text-gray-500 mb-1">Starting from</p>
-              <p className="text-2xl font-bold text-[#00b894]">₦5,000</p>
+              <p className="text-2xl font-bold text-[#00b894]">
+                ₦ ₦{event.ticketPrice.toLocaleString()}
+              </p>
             </div>
 
             <Link
-              href="/events/felabration"
+              href={`/booking/eventflow/${event.id}`}
               className="w-full sm:w-auto bg-[#1c1c1c] hover:bg-[#00b894] text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg transition-colors duration-300 flex items-center justify-center gap-2"
             >
               Get Tickets
