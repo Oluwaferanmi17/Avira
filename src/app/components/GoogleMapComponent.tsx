@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import { useState } from "react";
 import {
   GoogleMap,
-  LoadScript,
   Marker,
   Autocomplete,
+  useLoadScript,
 } from "@react-google-maps/api";
 import { aviraMapStyle } from "@/lib/mapStyles";
 
@@ -22,15 +23,21 @@ export default function GoogleMapComponent({
   address,
   height = "350px",
 }: GoogleMapComponentProps) {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
+    libraries: ["places"],
+  });
+
   const [center, setCenter] = useState({
     lat: lat || 6.5244,
     lng: lng || 3.3792,
-  }); // Default to Lagos if no props provided
+  });
+
   const [autocomplete, setAutocomplete] = useState<any>(null);
 
   const containerStyle = {
     width: "100%",
-    height: height,
+    height,
     borderRadius: "12px",
   };
 
@@ -45,11 +52,10 @@ export default function GoogleMapComponent({
     }
   };
 
+  if (!isLoaded) return <div>Loading map...</div>;
+
   return (
-    <LoadScript
-      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}
-      libraries={["places"]}
-    >
+    <>
       {!address && (
         <div className="flex flex-col gap-2 mb-4">
           <Autocomplete
@@ -79,20 +85,9 @@ export default function GoogleMapComponent({
           position={center}
           icon={{
             url: "/avira-pin.svg",
-            scaledSize: new google.maps.Size(40, 40),
           }}
-          animation={google.maps.Animation.DROP}
         />
-        {/* Pulsing marker circle */}
-        <div
-          className="absolute w-8 h-8 rounded-full bg-[#00b894]/30 animate-ping"
-          style={{
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        ></div>
       </GoogleMap>
-    </LoadScript>
+    </>
   );
 }

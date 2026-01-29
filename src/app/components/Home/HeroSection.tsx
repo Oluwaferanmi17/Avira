@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 // Ensure you import slick-carousel CSS in your globals.css or here
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import Link from "next/link";
 
 const images = [
   "https://images.unsplash.com/photo-1694336662153-287aed24d9ef?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fG5pZ2VyaWElMjBmZXN0aXZhbHxlbnwwfHwwfHx8MA%3D%3D",
@@ -99,12 +100,16 @@ const HeroSection = () => {
           </p>
 
           <div className="mt-6 flex gap-4 flex-wrap">
-            <button className="bg-[#00b894] text-white px-6 py-3 rounded-2xl shadow hover:bg-[#019a7a] transition font-medium">
-              Start Exploring
-            </button>
-            <button className="border border-[#00b894] text-[#00b894] px-6 py-3 rounded-2xl hover:bg-[#e6fdf8] transition font-medium">
-              View Upcoming Events
-            </button>
+            <Link href="Page/stay">
+              <button className="bg-[#00b894] text-white px-6 py-3 rounded-2xl shadow hover:bg-[#019a7a] transition font-medium">
+                Start Exploring
+              </button>
+            </Link>
+            <Link href="Page/events">
+              <button className="border border-[#00b894] text-[#00b894] px-6 py-3 rounded-2xl hover:bg-[#e6fdf8] transition font-medium">
+                View Upcoming Events
+              </button>
+            </Link>
           </div>
 
           <div className="max-w-md py-6">

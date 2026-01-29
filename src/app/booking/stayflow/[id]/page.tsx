@@ -9,18 +9,15 @@ import { differenceInCalendarDays, format } from "date-fns";
 
 // Components
 import NavBar from "../../../components/Home/NavBar";
-<<<<<<< HEAD
-import Map from "../../../components/AviraMapCore";
+// import Map from "../../../components/AviraMapCore";
 // import { Calendar } from "../../../../components/ui/calendar";
-=======
-import GoogleMapComponent from "../../../components/GoogleMapComponent";
->>>>>>> 7c1af9a (feat: integrate Google Maps and fix review system)
 import PhotoGallery from "@/app/components/PhotoGallery";
 import { withAuth } from "../../../components/withAuth";
 
 // Store
 import { useBookingStore } from "@/Store/useBookingStore";
 import CustomRangeCalendar from "@/app/components/CustomRangeCalendar";
+import GoogleMapComponent from "@/app/components/GoogleMapComponent";
 
 // --- Types ---
 interface DateRange {
@@ -35,7 +32,13 @@ interface StayType {
   photos: string[];
   amenities: string[];
   pricing?: { basePrice: number; cleaningFee: number; serviceFee: number };
-  address?: { city: string; country: string; line1: string; lat?: number; lng?: number };
+  address?: {
+    city: string;
+    country: string;
+    line1: string;
+    lat?: number;
+    lng?: number;
+  };
   reviews?: Array<{
     id: number;
     rating: number;
@@ -318,60 +321,8 @@ function StayDetails() {
                       : "Address available after booking"}
                   </p>
                   <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-200">
-<<<<<<< HEAD
                     {/* <Map /> */}
-=======
-                    <GoogleMapComponent
-                      lat={stay.address?.lat}
-                      lng={stay.address?.lng}
-                      address={`${stay.address?.line1}, ${stay.address?.city}`}
-                      height="400px"
-                    />
-                  </div>
-                </div>
-
-                {/* Reviews Section */}
-                <div className="py-6 border-t border-slate-100">
-                  <h2 className="text-xl font-semibold mb-6">
-                    Reviews ({stay.reviews?.length || 0})
-                  </h2>
-                  <div className="space-y-6">
-                    {stay.reviews && stay.reviews.length > 0 ? (
-                      stay.reviews.map((review) => (
-                        <div key={review.id} className="space-y-3">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={review.user.image || "/default-avatar.png"}
-                              alt={review.user.name}
-                              className="h-10 w-10 rounded-full object-cover"
-                            />
-                            <div>
-                              <div className="font-semibold text-sm">
-                                {review.user.name}
-                              </div>
-                              <div className="text-xs text-slate-500">
-                                {format(new Date(review.createdAt), "MMMM yyyy")}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 text-yellow-400 text-xs">
-                            {[...Array(5)].map((_, i) => (
-                              <span key={i}>
-                                {i < review.rating ? "★" : "☆"}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="text-slate-700 text-sm leading-relaxed">
-                            {review.comment}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-slate-500 italic text-sm">
-                        No reviews yet. Be the first to review after your stay!
-                      </p>
-                    )}
->>>>>>> 7c1af9a (feat: integrate Google Maps and fix review system)
+                    <GoogleMapComponent />
                   </div>
                 </div>
               </div>
@@ -400,8 +351,9 @@ function StayDetails() {
                   >
                     <span>
                       {range?.from
-                        ? `${format(range.from, "MMM dd")} ${range.to ? `- ${format(range.to, "MMM dd")}` : ""
-                        }`
+                        ? `${format(range.from, "MMM dd")} ${
+                            range.to ? `- ${format(range.to, "MMM dd")}` : ""
+                          }`
                         : "Check-in - Check-out"}
                     </span>
                   </div>
@@ -486,10 +438,11 @@ function StayDetails() {
                 )}
 
                 <button
-                  className={`w-full py-3.5 rounded-lg text-white font-semibold transition-all ${bookDisabled
+                  className={`w-full py-3.5 rounded-lg text-white font-semibold transition-all ${
+                    bookDisabled
                       ? "bg-slate-300 cursor-not-allowed"
                       : "bg-[#00b894] hover:bg-[#019678] active:scale-[0.98]"
-                    }`}
+                  }`}
                   disabled={bookDisabled}
                   onClick={handleBookNow}
                 >
@@ -528,9 +481,9 @@ function StayDetails() {
                   <p className="font-medium text-slate-900">
                     {range?.from && range?.to
                       ? `${format(range.from, "MMM d")} – ${format(
-                        range.to,
-                        "MMM d, yyyy",
-                      )}`
+                          range.to,
+                          "MMM d, yyyy",
+                        )}`
                       : "—"}
                   </p>
                 </div>
