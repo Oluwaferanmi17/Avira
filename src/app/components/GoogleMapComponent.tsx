@@ -23,8 +23,10 @@ export default function GoogleMapComponent({
   address,
   height = "350px",
 }: GoogleMapComponentProps) {
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: apiKey as string,
     libraries: ["places"],
   });
 
@@ -51,6 +53,22 @@ export default function GoogleMapComponent({
       }
     }
   };
+
+  if (!apiKey) {
+    return (
+      <div className="flex items-center justify-center p-8 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-sm">
+        Google Maps API Key missing. Please check your .env file.
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex items-center justify-center p-8 bg-rose-50 rounded-xl border border-rose-200 text-rose-800 text-sm">
+        Error loading Google Maps: {loadError.message}
+      </div>
+    );
+  }
 
   if (!isLoaded) return <div>Loading map...</div>;
 

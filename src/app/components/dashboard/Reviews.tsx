@@ -47,9 +47,9 @@ const Reviews = () => {
 
         // Assuming API returns data in the correct shape, otherwise map here
         setReviews(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load reviews");
+      } catch (error: any) {
+        console.error("Reviews component fetch error:", error);
+        toast.error(`Error: ${error.message || "Failed to load reviews"}`);
       } finally {
         setIsLoading(false);
       }
@@ -169,9 +169,8 @@ const Reviews = () => {
             {[...Array(5)].map((_, i) => (
               <FaStar
                 key={i}
-                className={`text-sm ${
-                  i < review.rating ? "text-yellow-400" : "text-gray-200"
-                }`}
+                className={`text-sm ${i < review.rating ? "text-yellow-400" : "text-gray-200"
+                  }`}
               />
             ))}
           </div>

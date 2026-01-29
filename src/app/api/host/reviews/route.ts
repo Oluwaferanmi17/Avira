@@ -15,8 +15,11 @@ export async function GET() {
     });
 
     if (!user) {
+      console.log("Host reviews: User not found for email", session.user.email);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    console.log("Fetching reviews for host ID:", user.id);
 
     const reviews = await prisma.review.findMany({
       where: {
@@ -36,6 +39,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
+    console.log(`Found ${reviews.length} reviews for host`);
     return NextResponse.json(reviews);
   } catch (error) {
     console.error("Error fetching host reviews:", error);

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const reply = await prisma.reply.create({
     data: {
       message,
-      review: { connect: { id: reviewId } },
+      review: { connect: { id: Number(reviewId) } },
     },
   });
 
