@@ -40,7 +40,6 @@ export async function POST(req: Request) {
       stay.pricing.serviceFee;
 
     const booking = await prisma.$transaction(async (tx) => {
-      // 🔒 1. Check for overlapping bookings
       const conflict = await tx.stayBooking.findFirst({
         where: {
           stayId,
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
         throw new Error("DOUBLE_BOOKING");
       }
 
-      // ✅ 2. Create booking
+      //  2. Create booking
       const createdBooking = await tx.stayBooking.create({
         data: {
           userId,
@@ -69,7 +68,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // 🔔 3. Create notification
       await tx.notification.create({
         data: {
           userId,
@@ -80,7 +78,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // ✅ 4. Return booking LAST
       return createdBooking;
     });
 

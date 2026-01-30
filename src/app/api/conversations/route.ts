@@ -5,13 +5,11 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
-    // ✅ Step 1: Authenticate the user
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ Step 2: Find the logged-in user in DB
     const sender = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -20,7 +18,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // ✅ Step 3: Get the receiver ID from the request body
     const { receiverId } = await req.json();
     if (!receiverId) {
       return NextResponse.json(
@@ -34,7 +31,7 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    // ✅ Step 4: Check if a conversation already exists between them
+
     const existingConversation = await prisma.conversation.findFirst({
       where: {
         AND: [

@@ -26,10 +26,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Better City Extraction (Handles "Lagos", "Lagos, Nigeria", "Lagos Nigeria")
     const searchCity = destination.split(/,| /)[0].trim();
 
-    // 2. Fetch Real Data (RAG)
     // We fetch more items to give AI better choices
     const [stays, events, experiences] = await Promise.all([
       prisma.stay.findMany({

@@ -8,7 +8,7 @@ import {
   Star,
   MapPin,
   Calendar,
-  AlertCircle,
+  // AlertCircle,
 } from "lucide-react";
 import NavBar from "@/app/components/Home/NavBar";
 import ReviewModal from "@/app/components/ReviewModal";

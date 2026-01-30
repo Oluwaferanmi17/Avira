@@ -138,13 +138,13 @@ export default function BookingSuccess({ hostId }: { hostId: string }) {
                 Back to Home
               </button>
             </Link>
-            <button
+            {/* <button
               onClick={handleContactHost}
               className="flex items-center gap-2 border rounded-md px-4 py-2 text-sm hover:bg-gray-100 transition"
             >
               <MessageSquare className="w-4 h-4" />
               Contact Host
-            </button>
+            </button> */}
           </div>
           <div className="mt-4 text-xs text-slate-500">
             A confirmation email with your reservation details has been sent

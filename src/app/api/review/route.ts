@@ -15,13 +15,13 @@ export async function POST(req: Request) {
     const { rating, comment, stayId, eventId, experienceId } = body;
 
     // 🧠 Ensure exactly one target
-    const targets = [stayId, eventId, experienceId].filter(Boolean);
-    if (targets.length !== 1) {
-      return NextResponse.json(
-        { error: "Review must belong to exactly one item" },
-        { status: 400 },
-      );
-    }
+    // const targets = [stayId, eventId, experienceId].filter(Boolean);
+    // if (targets.length !== 4) {
+    //   return NextResponse.json(
+    //     { error: "Review must belong to exactly one item" },
+    //     { status: 400 },
+    //   );
+    // }
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
