@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // /* eslint-disable @typescript-eslint/no-explicit-any */
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
@@ -108,8 +109,9 @@ export async function GET() {
       id: b.experience?.id, // Use Experience ID, not booking ID
       bookingId: b.id,
       title: b.experience?.title || "Experience",
-      location: `${b.experience?.venue || ""}, ${b.experience?.city || ""}, ${b.experience?.country || ""
-        }`,
+      location: `${b.experience?.venue || ""}, ${b.experience?.city || ""}, ${
+        b.experience?.country || ""
+      }`,
       dateStart: b.date,
       dateEnd: b.date,
       price: b.experience?.price ? `₦${b.experience.price}` : "Free",

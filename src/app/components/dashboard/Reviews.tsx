@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaStar, FaReply, FaRegCommentDots } from "react-icons/fa";
@@ -169,8 +170,9 @@ const Reviews = () => {
             {[...Array(5)].map((_, i) => (
               <FaStar
                 key={i}
-                className={`text-sm ${i < review.rating ? "text-yellow-400" : "text-gray-200"
-                  }`}
+                className={`text-sm ${
+                  i < review.rating ? "text-yellow-400" : "text-gray-200"
+                }`}
               />
             ))}
           </div>
